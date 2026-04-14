@@ -1,10 +1,75 @@
 import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useLearnChat } from './useLearnChat'
 
 interface LearnChatProps {
   resourceTitle: string
   resourceContent: string
   onClose: () => void
+}
+
+// Shared markdown renderer — used for both finished messages and live streaming
+function MarkdownContent({ text, dim }: { text: string; dim?: boolean }) {
+  const baseColor = dim ? 'var(--text2)' : 'var(--text)'
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => (
+          <p style={{ color: baseColor, marginBottom: 8, lineHeight: 1.75 }}>{children}</p>
+        ),
+        strong: ({ children }) => (
+          <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em style={{ color: baseColor }}>{children}</em>
+        ),
+        h1: ({ children }) => (
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-serif)', marginTop: 16, marginBottom: 6 }}>{children}</h1>
+        ),
+        h2: ({ children }) => (
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', fontFamily: 'var(--font-serif)', marginTop: 14, marginBottom: 6 }}>{children}</h2>
+        ),
+        h3: ({ children }) => (
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', fontFamily: 'var(--font-serif)', marginTop: 12, marginBottom: 4 }}>{children}</h3>
+        ),
+        h4: ({ children }) => (
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', marginTop: 10, marginBottom: 4 }}>{children}</h4>
+        ),
+        hr: () => (
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '14px 0' }} />
+        ),
+        ul: ({ children }) => (
+          <ul style={{ paddingLeft: 20, marginBottom: 8, color: baseColor }}>{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol style={{ paddingLeft: 20, marginBottom: 8, color: baseColor }}>{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li style={{ marginBottom: 4, lineHeight: 1.7, color: baseColor }}>{children}</li>
+        ),
+        code: ({ children, className }) => {
+          const isBlock = !!className
+          return isBlock ? (
+            <pre style={{ background: 'var(--surface2)', borderRadius: 6, padding: '10px 14px', overflowX: 'auto', marginBottom: 8 }}>
+              <code style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text)' }}>{children}</code>
+            </pre>
+          ) : (
+            <code style={{ background: 'var(--surface2)', borderRadius: 3, padding: '1px 5px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>{children}</code>
+          )
+        },
+        blockquote: ({ children }) => (
+          <blockquote style={{ borderLeft: '3px solid var(--accent)', paddingLeft: 12, margin: '8px 0', color: 'var(--text3)', fontStyle: 'italic' }}>{children}</blockquote>
+        ),
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{children}</a>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  )
 }
 
 export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChatProps) {
@@ -50,37 +115,24 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
                 {msg.content}
               </div>
             ) : (
-              <div style={{ fontSize: 13, lineHeight: 1.8, color: 'var(--text)' }}>
-                {/* Render markdown-like content with phases */}
-                {msg.content.split('\n').map((line, i) => {
-                  if (line.trim() === '---') return <hr key={i} className="divider" />
-                  if (line.startsWith('**') && line.endsWith('**')) {
-                    return <h4 key={i} style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 8, fontFamily: 'var(--font-serif)' }}>{line.replace(/\*\*/g, '')}</h4>
-                  }
-                  if (line.match(/^\d+\.\s\*\*/)) {
-                    const parts = line.match(/^(\d+\.)\s\*\*(.+?)\*\*(.*)/)
-                    if (parts) {
-                      return (
-                        <div key={i} style={{ display: 'flex', gap: 8, marginTop: 6, marginBottom: 4 }}>
-                          <span style={{ color: 'var(--accent)', fontWeight: 600, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{parts[1]}</span>
-                          <div><strong style={{ color: 'var(--text)' }}>{parts[2]}</strong><span style={{ color: 'var(--text2)' }}>{parts[3]}</span></div>
-                        </div>
-                      )
-                    }
-                  }
-                  if (line.trim() === '') return <br key={i} />
-                  return <p key={i} style={{ color: 'var(--text2)', marginBottom: 2 }}>{line}</p>
-                })}
+              <div style={{ fontSize: 13 }}>
+                <MarkdownContent text={msg.content} />
               </div>
             )}
           </div>
         ))}
 
-        {/* Streaming */}
+        {/* Live streaming with markdown rendering */}
         {streamingText && (
-          <div style={{ fontSize: 13, lineHeight: 1.8, color: 'var(--text2)' }}>
-            {streamingText}
-            <span style={{ display: 'inline-block', width: 6, height: 14, background: 'var(--accent)', marginLeft: 2, borderRadius: 1, animation: 'spin 1s ease-in-out infinite' }} />
+          <div style={{ fontSize: 13 }}>
+            <MarkdownContent text={streamingText} dim />
+            {/* Blinking cursor appended after the last character */}
+            <span style={{
+              display: 'inline-block', width: 6, height: 14,
+              background: 'var(--accent)', marginLeft: 2, borderRadius: 1,
+              verticalAlign: 'text-bottom',
+              animation: 'spin 1s ease-in-out infinite',
+            }} />
           </div>
         )}
 
@@ -97,10 +149,15 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
 
       {/* Input */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', gap: 8 }}>
-        <input className="input" value={input} onChange={(e) => setInput(e.target.value)}
+        <input
+          className="input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Pregunta algo sobre este recurso..."
-          disabled={isTeaching} style={{ flex: 1 }} />
+          disabled={isTeaching}
+          style={{ flex: 1 }}
+        />
         <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={!input.trim() || isTeaching}>
           Preguntar
         </button>
