@@ -60,7 +60,7 @@ export function DashboardFeature({
       )}
 
       {analysis && (
-        <QuickInsights analysis={analysis} onNavigate={onNavigate} />
+        <QuickInsights analysis={analysis} content={content} onNavigate={onNavigate} />
       )}
     </>
   )

@@ -277,6 +277,27 @@ textarea.input { resize: vertical; min-height: 80px; line-height: 1.6; }
 .fw-600 { font-weight: 600; }
 .w-full { width: 100%; }
 
+/* ─── TRENDING FEED (Techmeme-style) ────────────────────────────────────── */
+.trending-feed { padding: 4px 0; }
+.trending-item { padding: 18px 0; border-bottom: 1px solid var(--border); }
+.trending-item:last-child { border-bottom: none; padding-bottom: 4px; }
+.trending-meta-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.trending-headline { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.45; margin-bottom: 5px; letter-spacing: -0.2px; transition: color .15s; }
+.trending-headline:hover { color: var(--accent); cursor: default; }
+.trending-source-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 7px; }
+.trending-source-name { font-size: 11px; font-weight: 600; color: var(--text2); font-family: var(--font-mono); }
+.trending-source-sep  { font-size: 10px; color: var(--border2); }
+.trending-excerpt { font-size: 12.5px; color: var(--text2); line-height: 1.65; margin-bottom: 10px; }
+.trending-why { font-size: 11px; color: var(--text3); font-style: italic; margin-bottom: 8px; display: flex; gap: 5px; }
+.trending-also { padding-left: 14px; border-left: 2px solid var(--border); margin-top: 10px; }
+.trending-also-label { font-size: 9px; color: var(--text3); font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.trending-also-item { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+.trending-also-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border2); flex-shrink: 0; margin-top: 6px; }
+.trending-also-body { flex: 1; min-width: 0; }
+.trending-also-source { font-size: 10px; font-weight: 600; font-family: var(--font-mono); color: var(--text3); }
+.trending-also-quote { font-size: 11px; color: var(--text2); font-style: italic; line-height: 1.5; margin-top: 1px; }
+.trending-inference { font-size: 10px; color: var(--mid); background: rgba(180,83,9,.07); border: 1px solid rgba(180,83,9,.18); border-radius: 5px; padding: 4px 8px; margin-top: 8px; display: inline-flex; gap: 4px; }
+
 /* ─── CONFIDENCE BADGE ───────────────────────────────────────────────────── */
 .confidence-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
 .confidence-high      { background: rgba(21,128,61,.12);   color: var(--high);   border: 1px solid rgba(21,128,61,.3); }

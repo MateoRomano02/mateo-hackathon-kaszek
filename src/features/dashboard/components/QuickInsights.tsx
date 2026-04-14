@@ -1,8 +1,9 @@
 import { AnalysisResult } from '@/entities/analysis/types'
+import { ContentItem } from '@/entities/content/types'
 import { Card } from '@/shared/ui/Card/Card'
 import { Button } from '@/shared/ui/Button/Button'
 import { PriorityBadge } from '@/shared/ui/Badge/Badge'
-import { InsightList } from '@/features/analysis/components/InsightList'
+import { TrendingFeed } from './TrendingFeed'
 
 const ACTION_ICONS: Record<string, string> = {
   task: '⚡', template: '📄', prompt: '💬', hypothesis: '🧪', checklist: '✓',
@@ -10,20 +11,31 @@ const ACTION_ICONS: Record<string, string> = {
 
 interface QuickInsightsProps {
   analysis: AnalysisResult
+  content: ContentItem[]
   onNavigate: (route: string) => void
 }
 
-export function QuickInsights({ analysis, onNavigate }: QuickInsightsProps) {
+export function QuickInsights({ analysis, content, onNavigate }: QuickInsightsProps) {
   return (
     <div className="grid-2 gap-16 fade-up fade-up-2">
-      <Card>
-        <div className="card-label">Insights prioritarios</div>
-        <InsightList insights={analysis.insights.slice(0, 3)} compact />
-        <Button variant="ghost" size="sm" type="button" onClick={() => onNavigate('/analysis')}>
+
+      {/* ── Trending feed — Techmeme style ── */}
+      <div className="card">
+        <div className="card-label">Señales de esta semana</div>
+        <TrendingFeed
+          insights={analysis.insights.slice(0, 3)}
+          content={content}
+        />
+        <Button
+          variant="ghost" size="sm" type="button"
+          style={{ marginTop: 12 }}
+          onClick={() => onNavigate('/analysis')}
+        >
           Ver análisis completo →
         </Button>
-      </Card>
+      </div>
 
+      {/* ── Next actions ── */}
       <Card>
         <div className="card-label">Próximas acciones</div>
         <div className="mt-12">
@@ -44,6 +56,7 @@ export function QuickInsights({ analysis, onNavigate }: QuickInsightsProps) {
           Ver plan completo →
         </Button>
       </Card>
+
     </div>
   )
 }
