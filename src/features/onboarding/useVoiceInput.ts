@@ -3,239 +3,169 @@ import { pipeline, env } from '@xenova/transformers'
 
 env.allowLocalModels = false
 
-export type VoiceError = 'not-allowed' | 'audio-capture' | 'transcription' | 'network-fallback' | null
+export type VoiceError = 'not-allowed' | 'audio-capture' | 'transcription' | null
 
 // ─── Web Speech API types ─────────────────────────────────────────────────────
-
 interface SpeechRecognitionEvent extends Event {
   resultIndex: number
-  results: SpeechRecognitionResultList
+  results: { length: number; [i: number]: { isFinal: boolean; [i: number]: { transcript: string } } }
 }
-interface SpeechRecognitionResultList {
-  readonly length: number
-  [index: number]: SpeechRecognitionResult
-}
-interface SpeechRecognitionResult {
-  readonly isFinal: boolean
-  readonly length: number
-  [index: number]: SpeechRecognitionAlternative
-}
-interface SpeechRecognitionAlternative {
-  readonly transcript: string
-  readonly confidence: number
-}
-interface SpeechRecognitionErrorEvent extends Event {
-  readonly error: string
-}
-interface SpeechRecognitionInstance extends EventTarget {
-  lang: string
-  interimResults: boolean
-  continuous: boolean
-  onresult: ((event: SpeechRecognitionEvent) => void) | null
+interface SpeechRecognitionErrorEvent extends Event { readonly error: string }
+interface SpeechRec extends EventTarget {
+  lang: string; interimResults: boolean; continuous: boolean
+  onresult: ((e: SpeechRecognitionEvent) => void) | null
   onend: (() => void) | null
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
-  start(): void
-  stop(): void
-  abort(): void
+  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null
+  start(): void; stop(): void; abort(): void
 }
 declare global {
   interface Window {
-    SpeechRecognition?: new () => SpeechRecognitionInstance
-    webkitSpeechRecognition?: new () => SpeechRecognitionInstance
+    SpeechRecognition?: new () => SpeechRec
+    webkitSpeechRecognition?: new () => SpeechRec
   }
 }
 
-// ─── Whisper fallback ─────────────────────────────────────────────────────────
+// ─── Whisper (singleton, loaded once) ────────────────────────────────────────
+type Pipe = Awaited<ReturnType<typeof pipeline>>
+let _whisper: Pipe | null = null
+let _loading = false
 
-type WhisperPipeline = Awaited<ReturnType<typeof pipeline>>
-let whisperCache: WhisperPipeline | null = null
-let whisperLoading = false
-
-async function getWhisper(onProgress?: (pct: number) => void): Promise<WhisperPipeline> {
-  if (whisperCache) return whisperCache
-  if (whisperLoading) {
-    return new Promise((resolve, reject) => {
-      const t = setInterval(() => {
-        if (whisperCache) { clearInterval(t); resolve(whisperCache) }
-        if (!whisperLoading) { clearInterval(t); reject(new Error('load failed')) }
-      }, 200)
-    })
-  }
-  whisperLoading = true
+async function loadWhisper(onPct?: (n: number) => void): Promise<Pipe> {
+  if (_whisper) return _whisper
+  if (_loading) return new Promise((res, rej) => {
+    const t = setInterval(() => {
+      if (_whisper) { clearInterval(t); res(_whisper) }
+      if (!_loading) { clearInterval(t); rej(new Error('failed')) }
+    }, 300)
+  })
+  _loading = true
   try {
-    whisperCache = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
+    _whisper = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
       progress_callback: (i: { progress?: number }) => {
-        if (typeof i.progress === 'number') onProgress?.(Math.round(i.progress))
+        if (typeof i.progress === 'number') onPct?.(Math.round(i.progress))
       },
     })
-    return whisperCache
-  } finally {
-    whisperLoading = false
-  }
+    return _whisper
+  } finally { _loading = false }
 }
 
-function getBestMime(): string {
-  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg']
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
+function bestMime() {
+  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'].find(
+    t => MediaRecorder.isTypeSupported(t)
+  ) ?? ''
 }
 
-async function toFloat32Mono16k(blob: Blob): Promise<Float32Array> {
-  const ab = await blob.arrayBuffer()
+async function blobToFloat32(blob: Blob): Promise<Float32Array> {
   const ctx = new AudioContext({ sampleRate: 16000 })
-  const decoded = await ctx.decodeAudioData(ab)
+  const decoded = await ctx.decodeAudioData(await blob.arrayBuffer())
   await ctx.close()
   if (decoded.numberOfChannels === 1) return decoded.getChannelData(0)
-  const l = decoded.getChannelData(0), r = decoded.getChannelData(1)
-  const m = new Float32Array(l.length)
-  for (let i = 0; i < l.length; i++) m[i] = (l[i] + r[i]) / 2
-  return m
+  const L = decoded.getChannelData(0), R = decoded.getChannelData(1)
+  const out = new Float32Array(L.length)
+  for (let i = 0; i < L.length; i++) out[i] = (L[i] + R[i]) / 2
+  return out
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
+export function useVoiceInput(onDone?: (text: string) => void) {
+  const [isListening, setIsListening]     = useState(false)
+  const [isTranscribing, setTranscribing] = useState(false)
+  const [loadingPct, setLoadingPct]       = useState<number | null>(null)
+  const [liveText, setLiveText]           = useState('')   // text shown while speaking
+  const [isSupported, setIsSupported]     = useState(false)
+  const [error, setError]                 = useState<VoiceError>(null)
+  const [whisperMode, setWhisperMode]     = useState(false)
 
-export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
-  const [isListening, setIsListening] = useState(false)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const [loadingPct, setLoadingPct] = useState<number | null>(null)
-  const [interimText, setInterimText] = useState('')
-  const [isSupported, setIsSupported] = useState(false)
-  const [voiceError, setVoiceError] = useState<VoiceError>(null)
-  const [useWhisperFallback, setUseWhisperFallback] = useState(false)
-
-  const speechRef = useRef<SpeechRecognitionInstance | null>(null)
+  const speechRef   = useRef<SpeechRec | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const onFinalRef = useRef(onFinalTranscript)
-  const finalAccRef = useRef('')
-
-  useEffect(() => { onFinalRef.current = onFinalTranscript }, [onFinalTranscript])
+  const chunksRef   = useRef<Blob[]>([])
+  const finalRef    = useRef('')       // accumulated final text from speech API
+  const onDoneRef   = useRef(onDone)
+  useEffect(() => { onDoneRef.current = onDone }, [onDone])
 
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    setIsSupported(!!(SR || (navigator.mediaDevices && typeof MediaRecorder !== 'undefined')))
-    // Pre-warm Whisper so it's ready if needed
-    getWhisper((p) => setLoadingPct(p)).then(() => setLoadingPct(null)).catch(() => {})
+    setIsSupported(!!(SR || navigator.mediaDevices))
+    // Pre-warm Whisper quietly
+    loadWhisper(p => setLoadingPct(p)).then(() => setLoadingPct(null)).catch(() => {})
   }, [])
 
-  // ── Web Speech API (live transcription) ──────────────────────────────────────
-
-  const startSpeechRecognition = useCallback((): boolean => {
+  // ── Option A: Web Speech API (live text) ──────────────────────────────────
+  const tryWebSpeech = useCallback((): boolean => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return false
-
     speechRef.current?.abort()
     const rec = new SR()
-    rec.lang = 'es'
-    rec.interimResults = true
-    rec.continuous = true
-
-    finalAccRef.current = ''
-    setInterimText('')
+    rec.lang = 'es'; rec.interimResults = true; rec.continuous = true
+    finalRef.current = ''
+    setLiveText('')
 
     rec.onresult = (e: SpeechRecognitionEvent) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i]
-        if (r.isFinal) {
-          finalAccRef.current += r[0].transcript + ' '
-        } else {
-          interim += r[0].transcript
-        }
+        if (r.isFinal) finalRef.current += r[0].transcript + ' '
+        else interim += r[0].transcript
       }
-      setInterimText((finalAccRef.current + interim).trim())
+      setLiveText((finalRef.current + interim).trim())
     }
-
     rec.onend = () => {
       setIsListening(false)
-      setInterimText('')
-      const text = finalAccRef.current.trim()
-      if (text) onFinalRef.current?.(text)
+      setLiveText('')
+      const t = finalRef.current.trim()
+      if (t) onDoneRef.current?.(t)
     }
-
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
       if (e.error === 'aborted') return
-      setIsListening(false)
-      setInterimText('')
-      if (e.error === 'network') {
-        setUseWhisperFallback(true)
-        setVoiceError('network-fallback')
-      } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        setVoiceError('not-allowed')
-      } else if (e.error === 'audio-capture') {
-        setVoiceError('audio-capture')
-      }
+      setIsListening(false); setLiveText('')
+      if (e.error === 'network') { setWhisperMode(true); startWhisper() }
+      else if (e.error === 'not-allowed') setError('not-allowed')
+      else if (e.error === 'audio-capture') setError('audio-capture')
     }
-
     speechRef.current = rec
-    try {
-      rec.start()
-      setIsListening(true)
-      return true
-    } catch {
-      return false
-    }
+    try { rec.start(); setIsListening(true); return true }
+    catch { return false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Whisper fallback (record → transcribe after stop) ─────────────────────────
-
-  const startWhisperRecording = useCallback(async () => {
+  // ── Option B: MediaRecorder + Whisper (record-then-transcribe) ────────────
+  const startWhisper = useCallback(async () => {
     let stream: MediaStream
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      setVoiceError('not-allowed')
-      return
-    }
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }) }
+    catch { setError('not-allowed'); return }
 
-    const mime = getBestMime()
-    const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
+    const mime = bestMime()
+    const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
     chunksRef.current = []
-
-    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
-
-    recorder.onstop = async () => {
-      stream.getTracks().forEach((t) => t.stop())
-      if (chunksRef.current.length === 0) return
-
-      const blob = new Blob(chunksRef.current, { type: mime || 'audio/webm' })
-      setIsTranscribing(true)
+    rec.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+    rec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop())
+      setLiveText('')
+      if (!chunksRef.current.length) return
+      setTranscribing(true)
       try {
-        const model = await getWhisper((p) => setLoadingPct(p))
+        const model = await loadWhisper(p => setLoadingPct(p))
         setLoadingPct(null)
-        const audio = await toFloat32Mono16k(blob)
+        const audio = await blobToFloat32(new Blob(chunksRef.current, { type: mime || 'audio/webm' }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: any = await (model as any)(audio, { language: 'spanish', task: 'transcribe' })
         const text: string = (Array.isArray(result) ? result[0]?.text : result?.text)?.trim() ?? ''
-        if (text) onFinalRef.current?.(text)
-      } catch {
-        setVoiceError('transcription')
-      } finally {
-        setIsTranscribing(false)
-        setLoadingPct(null)
-      }
+        if (text) onDoneRef.current?.(text)
+      } catch { setError('transcription') }
+      finally { setTranscribing(false); setLoadingPct(null) }
     }
-
-    recorderRef.current = recorder
-    recorder.start()
+    recorderRef.current = rec
+    rec.start()
     setIsListening(true)
   }, [])
 
-  // ── Public API ────────────────────────────────────────────────────────────────
-
+  // ── Public ─────────────────────────────────────────────────────────────────
   const startListening = useCallback(async () => {
-    setVoiceError(null)
-    setInterimText('')
-
-    if (!useWhisperFallback) {
-      const ok = startSpeechRecognition()
-      if (ok === false) {
-        setUseWhisperFallback(true)
-        await startWhisperRecording()
-      }
-    } else {
-      await startWhisperRecording()
-    }
-  }, [useWhisperFallback, startSpeechRecognition, startWhisperRecording])
+    setError(null); setLiveText('')
+    if (whisperMode) { await startWhisper(); return }
+    const ok = tryWebSpeech()
+    if (!ok) { setWhisperMode(true); await startWhisper() }
+  }, [whisperMode, tryWebSpeech, startWhisper])
 
   const stopListening = useCallback(() => {
     speechRef.current?.stop()
@@ -243,18 +173,10 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     setIsListening(false)
   }, [])
 
-  const clearError = useCallback(() => setVoiceError(null), [])
-
   return {
-    isListening,
-    isTranscribing,
-    loadingPct,
-    interimText,
-    isSupported,
-    voiceError,
-    useWhisperFallback,
-    startListening,
-    stopListening,
-    clearError,
+    isListening, isTranscribing, loadingPct,
+    liveText, isSupported, error, whisperMode,
+    startListening, stopListening,
+    clearError: () => setError(null),
   }
 }

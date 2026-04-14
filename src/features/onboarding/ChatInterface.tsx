@@ -30,8 +30,8 @@ export function ChatInterface() {
   )
 
   const {
-    isListening, isTranscribing, loadingPct, interimText,
-    isSupported, voiceError, useWhisperFallback,
+    isListening, isTranscribing, loadingPct, liveText,
+    isSupported, error, whisperMode,
     startListening, stopListening, clearError,
   } = useVoiceInput(handleVoiceEnd)
 
@@ -39,10 +39,10 @@ export function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
 
-  // Mirror live interim text into the input while speaking
+  // Mirror live text into the input while speaking (Web Speech mode)
   useEffect(() => {
-    if (isListening) setInputText(interimText)
-  }, [interimText, isListening])
+    if (isListening && !whisperMode) setInputText(liveText)
+  }, [liveText, isListening, whisperMode])
 
   const handleSend = () => {
     const text = inputText.trim()
@@ -90,6 +90,20 @@ export function ChatInterface() {
             <span style={{ fontSize: 12, color: 'var(--text3)' }}>Pensando...</span>
           </div>
         )}
+        {isListening && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ maxWidth: '75%', padding: '8px 14px', borderRadius: 12, background: 'var(--accent)', opacity: 0.85 }}>
+              {liveText ? (
+                <span style={{ fontSize: 13, color: '#fff', fontStyle: 'italic' }}>{liveText}</span>
+              ) : (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'pulse 1s infinite' }} />
+                  {whisperMode ? 'Grabando...' : 'Escuchando...'}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -100,27 +114,27 @@ export function ChatInterface() {
           <button className="btn btn-ghost btn-sm" onClick={() => setAiMode(aiMode === 'mock' ? 'anthropic' : 'mock')}>
             {aiMode === 'anthropic' ? 'Claude AI' : 'Demo'}
           </button>
-          {voiceError && (
+          {error && (
             <span style={{ fontSize: 11, color: '#e53e3e', maxWidth: 260, textAlign: 'right', lineHeight: 1.3 }}>
-              {MIC_ERROR_LABELS[voiceError] ?? 'Error de micrófono.'}
+              {MIC_ERROR_LABELS[error] ?? 'Error de micrófono.'}
             </span>
           )}
-          {loadingPct !== null && !voiceError && (
+          {loadingPct !== null && !error && (
             <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1.5 }} />
               Cargando modelo... {loadingPct}%
             </span>
           )}
-          {isTranscribing && loadingPct === null && !voiceError && (
+          {isTranscribing && loadingPct === null && !error && (
             <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1.5 }} />
               Transcribiendo...
             </span>
           )}
-          {isListening && !voiceError && !isTranscribing && (
+          {isListening && !error && !isTranscribing && (
             <span style={{ fontSize: 11, color: '#e53e3e', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e53e3e', display: 'inline-block', animation: 'pulse 1s infinite' }} />
-              {useWhisperFallback ? 'Grabando...' : 'Escuchando...'}
+              {whisperMode ? 'Grabando...' : 'Escuchando...'}
             </span>
           )}
         </div>
@@ -132,7 +146,7 @@ export function ChatInterface() {
               className={`btn ${isListening ? 'btn-danger' : 'btn-secondary'} btn-sm`}
               onClick={handleMicClick}
               disabled={isBusy}
-              title={isListening ? 'Detener' : useWhisperFallback ? 'Grabar' : 'Hablar'}
+              title={isListening ? 'Detener' : whisperMode ? 'Grabar' : 'Hablar'}
             >
               {isTranscribing ? (
                 <span className="analyze-spinner" style={{ width: 14, height: 14, margin: 0, borderWidth: 2 }} />
@@ -157,20 +171,19 @@ export function ChatInterface() {
             onChange={(e) => !isListening && setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !isListening && (e.preventDefault(), handleSend())}
             placeholder={
-              isListening && !useWhisperFallback
+              isListening && !whisperMode
                 ? 'Hablá...'
-                : isListening && useWhisperFallback
+                : isListening && whisperMode
                 ? 'Grabando...'
                 : isTranscribing
                 ? 'Transcribiendo...'
                 : 'Escribe tu respuesta...'
             }
-            disabled={isBusy || (isListening && useWhisperFallback)}
+            disabled={isBusy || (isListening && whisperMode)}
             style={{
               flex: 1,
-              // Dim the text while it's live interim (not yet final)
-              color: isListening && !useWhisperFallback && interimText ? 'var(--text3)' : undefined,
-              fontStyle: isListening && !useWhisperFallback && interimText ? 'italic' : undefined,
+              color: isListening && !whisperMode && liveText ? 'var(--text3)' : undefined,
+              fontStyle: isListening && !whisperMode && liveText ? 'italic' : undefined,
             }}
           />
           <button
