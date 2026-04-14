@@ -5,14 +5,14 @@ import { ChatMessage } from './ChatMessage'
 import { useAppStore } from '@/app/providers/store'
 
 const MIC_ERROR_LABELS: Record<string, string> = {
-  'not-allowed': '🔒 Permiso denegado — habilitá el mic en el candado de la URL.',
-  'audio-capture': '🎙 No se detectó micrófono. Verificá que esté conectado.',
-  'transcription': '⚠️ Error al transcribir. Intentá de nuevo.',
-  'unknown': '⚠️ No se pudo iniciar el micrófono. Intentá de nuevo.',
+  'not-allowed': 'Permiso denegado — habilita el mic en el candado de la URL.',
+  'audio-capture': 'No se detecto microfono.',
+  'transcription': 'Error al transcribir. Intenta de nuevo.',
+  'unknown': 'No se pudo iniciar el microfono.',
 }
 
 export function ChatInterface() {
-  const { messages, streamingText, isThinking, sendMessage } = useOnboardingChat()
+  const { messages, streamingText, isThinking, isTransitioning, sendMessage } = useOnboardingChat()
 
   const [inputText, setInputText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -37,7 +37,6 @@ export function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
 
-  // Mirror live transcript into the input field
   useEffect(() => {
     if (transcript) setInputText(transcript)
   }, [transcript])
@@ -63,6 +62,17 @@ export function ChatInterface() {
 
   const isBusy = isThinking || isTranscribing
 
+  // Transition overlay
+  if (isTransitioning) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '60px 0' }}>
+        <span className="analyze-spinner" style={{ width: 36, height: 36, margin: 0 }} />
+        <h3 style={{ fontSize: 16, fontFamily: 'var(--font-serif)', color: 'var(--text)' }}>Preparando tu dashboard...</h3>
+        <p style={{ fontSize: 12, color: 'var(--text3)' }}>Analizando tu portafolio de skills con Claude</p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 420 }}>
       {/* Messages */}
@@ -86,25 +96,18 @@ export function ChatInterface() {
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 20 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => setAiMode(aiMode === 'mock' ? 'anthropic' : 'mock')}>
-            {aiMode === 'anthropic' ? 'Claude AI activo' : 'Modo demo'}
+            {aiMode === 'anthropic' ? 'Claude AI' : 'Demo'}
           </button>
-
-          {voiceError && (
-            <span style={{ fontSize: 11, color: '#e53e3e', maxWidth: 280, textAlign: 'right', lineHeight: 1.3 }}>
-              {MIC_ERROR_LABELS[voiceError] ?? MIC_ERROR_LABELS['unknown']}
-            </span>
-          )}
-
+          {voiceError && <span style={{ fontSize: 11, color: '#e53e3e', maxWidth: 280, textAlign: 'right', lineHeight: 1.3 }}>{MIC_ERROR_LABELS[voiceError] ?? MIC_ERROR_LABELS['unknown']}</span>}
           {isTranscribing && !voiceError && (
             <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1.5 }} />
               Transcribiendo...
             </span>
           )}
-
           {isListening && !voiceError && !isTranscribing && (
             <span style={{ fontSize: 11, color: '#e53e3e', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e53e3e', display: 'inline-block', animation: 'pulse 1s infinite' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e53e3e', display: 'inline-block' }} />
               Grabando... (toca para enviar)
             </span>
           )}
@@ -112,21 +115,13 @@ export function ChatInterface() {
 
         <div style={{ display: 'flex', gap: 8 }}>
           {isSupported && (
-            <button
-              className={`btn ${isListening ? 'btn-danger' : 'btn-secondary'} btn-sm`}
-              onClick={handleMicClick}
-              disabled={isBusy}
-              title={isListening ? 'Detener y enviar' : 'Hablar'}
-            >
+            <button className={`btn ${isListening ? 'btn-danger' : 'btn-secondary'} btn-sm`}
+              onClick={handleMicClick} disabled={isBusy} title={isListening ? 'Detener y enviar' : 'Hablar'}>
               {isTranscribing ? (
                 <span className="analyze-spinner" style={{ width: 14, height: 14, margin: 0, borderWidth: 2 }} />
               ) : isListening ? (
-                // Square stop icon while recording
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
               ) : (
-                // Mic icon when idle
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -135,22 +130,12 @@ export function ChatInterface() {
               )}
             </button>
           )}
-          <input
-            className="input"
-            ref={inputRef}
-            type="text"
-            value={inputText}
+          <input className="input" ref={inputRef} type="text" value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
             placeholder={isListening ? 'Grabando...' : isTranscribing ? 'Transcribiendo...' : 'Escribe tu respuesta...'}
-            disabled={isBusy || isListening}
-            style={{ flex: 1 }}
-          />
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleSend}
-            disabled={!inputText.trim() || isBusy || isListening}
-          >
+            disabled={isBusy || isListening} style={{ flex: 1 }} />
+          <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={!inputText.trim() || isBusy || isListening}>
             Enviar
           </button>
         </div>

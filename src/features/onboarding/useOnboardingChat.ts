@@ -18,6 +18,7 @@ export function useOnboardingChat() {
   const [streamingText, setStreamingText] = useState('')
   const [isThinking, setIsThinking] = useState(false)
 
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const { setUserProfile, setSkillStocks, aiMode } = useAppStore()
   const navigate = useNavigate()
   const isTransitioningRef = useRef(false)
@@ -78,9 +79,10 @@ export function useOnboardingChat() {
         // Profile extracted -- transition to dashboard
         if (result.type === 'profile_complete') {
           isTransitioningRef.current = true
+          setIsTransitioning(true)
           setUserProfile(result.profile)
 
-          // Generate skill stocks using the same service
+          // Generate skill stocks while showing transition
           try {
             const stocks = await service.analyzeSkillPortfolio(result.profile)
             setSkillStocks(stocks)
@@ -88,7 +90,7 @@ export function useOnboardingChat() {
             // Non-blocking: dashboard can still re-analyze
           }
 
-          setTimeout(() => navigate('/dashboard', { replace: true }), 2200)
+          setTimeout(() => navigate('/dashboard', { replace: true }), 1500)
         }
       } catch (err) {
         const errorMsg: ChatMessage = {
@@ -109,6 +111,7 @@ export function useOnboardingChat() {
     messages,
     streamingText,
     isThinking,
+    isTransitioning,
     sendMessage,
   }
 }

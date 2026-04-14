@@ -33,8 +33,8 @@ export function CoursesPage() {
           <div className="empty-icon">📚</div>
           <div className="empty-title">Todavia no tenes cursos</div>
           <div className="empty-desc">Anda al Feed, elegí una tendencia y clickea "Aprender".</div>
-          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate(ROUTES.FEED)}>
-            Ir al Feed
+          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate(ROUTES.DASHBOARD)}>
+            Ir al Dashboard
           </button>
         </div>
       ) : (

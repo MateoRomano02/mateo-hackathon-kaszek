@@ -7,12 +7,10 @@ import { ROUTES } from '@/shared/constants/routes'
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: 'dash' as const, label: 'Dashboard' },
-  { to: ROUTES.FEED, icon: 'signal' as const, label: 'Feed' },
-  { to: ROUTES.COURSES, icon: 'zap' as const, label: 'Mis Cursos' },
 ]
 
 export function AppShell() {
-  const { userProfile, contentItems, aiMode, setAiMode, resetAll } = useAppStore()
+  const { userProfile, aiMode, setAiMode, resetAll } = useAppStore()
   const navigate = useNavigate()
 
   useOnInit(() => {
@@ -21,10 +19,7 @@ export function AppShell() {
 
   if (!userProfile) return null
 
-  const learnedCount = contentItems.filter((c) => c.status === 'done').length
-
-  const getBadge = (to: string): number | null => {
-    if (to === ROUTES.COURSES && learnedCount > 0) return learnedCount
+  const getBadge = (_to: string): number | null => {
     return null
   }
 
