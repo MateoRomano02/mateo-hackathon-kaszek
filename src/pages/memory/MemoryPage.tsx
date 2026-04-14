@@ -12,23 +12,23 @@ export function MemoryPage() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Memoria</h1>
-        <p className="page-subtitle">Tu progreso de aprendizaje y refuerzo de skills.</p>
+        <h1 className="page-title">Memory</h1>
+        <p className="page-subtitle">Your learning progress and skill reinforcement.</p>
       </div>
 
       {/* Progress */}
       <div className="grid-3" style={{ marginBottom: 24 }}>
         <div className="card stat-highlight">
-          <div className="card-label">Contenido analizado</div>
+          <div className="card-label">Analyzed content</div>
           <div className="card-value">{doneContent}</div>
-          <div className="card-sub">{totalInsights} insights extraidos</div>
+          <div className="card-sub">{totalInsights} insights extracted</div>
         </div>
         <div className="card">
-          <div className="card-label">Proyectos completados</div>
+          <div className="card-label">Completed projects</div>
           <div className="card-value">{projects.length}</div>
         </div>
         <div className="card">
-          <div className="card-label">Skills trackeados</div>
+          <div className="card-label">Skills tracked</div>
           <div className="card-value">{skillStocks.length}</div>
         </div>
       </div>
@@ -38,7 +38,7 @@ export function MemoryPage() {
         <div className="card" style={{ marginBottom: 24 }}>
           {risingSkills.length > 0 && (
             <div className="memory-section">
-              <div className="memory-section-title">Aprendiendo (Rising)</div>
+              <div className="memory-section-title">Learning (Rising)</div>
               {risingSkills.map((s) => (
                 <div key={s.id} className="memory-item">
                   <span className="memory-dot dot-learned" />
@@ -53,7 +53,7 @@ export function MemoryPage() {
 
           {degradingSkills.length > 0 && (
             <div className="memory-section">
-              <div className="memory-section-title">Depriorizando (Degrading)</div>
+              <div className="memory-section-title">Deprioritizing (Degrading)</div>
               {degradingSkills.map((s) => (
                 <div key={s.id} className="memory-item">
                   <span className="memory-dot dot-pending" />
@@ -68,7 +68,7 @@ export function MemoryPage() {
 
           {goneSkills.length > 0 && (
             <div className="memory-section">
-              <div className="memory-section-title">Archivado (Gone)</div>
+              <div className="memory-section-title">Archived (Gone)</div>
               {goneSkills.map((s) => (
                 <div key={s.id} className="memory-item">
                   <span className="memory-dot dot-review" />
@@ -86,8 +86,8 @@ export function MemoryPage() {
       {skillStocks.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">?</div>
-          <div className="empty-title">Sin datos de memoria</div>
-          <div className="empty-desc">Completa el onboarding y analiza contenido para ver tu progreso aqui.</div>
+          <div className="empty-title">No memory data</div>
+          <div className="empty-desc">Complete onboarding and analyze content to see your progress here.</div>
         </div>
       )}
     </>

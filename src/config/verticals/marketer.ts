@@ -19,9 +19,9 @@ export const MARKETER_STACK_OPTIONS = [
 
 export const MARKETER_ONBOARDING = {
   title: 'Signal OS',
-  subtitle: 'Tu copiloto de aprendizaje tecnico.',
-  heroText: 'Transformamos el ruido en una ruta clara.',
-  roleQuestion: 'Cual es tu rol?',
-  seniorityQuestion: 'Cual es tu nivel de experiencia?',
-  stackQuestion: 'Que herramientas usas hoy?',
+  subtitle: 'Your technical learning copilot.',
+  heroText: 'We turn noise into a clear path.',
+  roleQuestion: 'What is your role?',
+  seniorityQuestion: 'What is your experience level?',
+  stackQuestion: 'What tools do you use today?',
 }

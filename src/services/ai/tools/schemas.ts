@@ -36,33 +36,33 @@ export type BuildUserProfileOutput = z.infer<typeof BuildUserProfileSchema>
 export const ANALYZE_PORTFOLIO_TOOL = {
   name: 'analyze_skill_portfolio' as const,
   description:
-    'Analiza el portafolio de skills de un profesional y clasifica cada skill como rising, stable, degrading o gone segun tendencias actuales del mercado.',
+    'Analyzes a professional\'s skill portfolio and classifies each skill as rising, stable, degrading, or gone based on current market trends.',
   input_schema: {
     type: 'object' as const,
     properties: {
       skill_stocks: {
         type: 'array',
-        description: 'Lista de skills analizados',
+        description: 'List of analyzed skills',
         items: {
           type: 'object',
           properties: {
-            skill: { type: 'string', description: 'Nombre del skill' },
+            skill: { type: 'string', description: 'Skill name' },
             status: {
               type: 'string',
               enum: ['rising', 'stable', 'degrading', 'gone'],
-              description: 'Estado actual del skill en el mercado',
+              description: 'Current market status of the skill',
             },
             rationale: {
               type: 'string',
-              description: 'Por que este skill tiene este estado (max 200 chars)',
+              description: 'Why this skill has this status (max 200 chars)',
             },
             priority_score: {
               type: 'number',
-              description: 'Puntaje de prioridad de 0 a 10',
+              description: 'Priority score from 0 to 10',
             },
             suggested_action: {
               type: 'string',
-              description: 'Que deberia hacer el usuario con este skill (max 150 chars)',
+              description: 'What the user should do with this skill (max 150 chars)',
             },
           },
           required: ['skill', 'status', 'rationale', 'priority_score', 'suggested_action'],
@@ -70,11 +70,11 @@ export const ANALYZE_PORTFOLIO_TOOL = {
       },
       summary: {
         type: 'string',
-        description: 'Resumen general del portafolio (max 300 chars)',
+        description: 'Overall portfolio summary (max 300 chars)',
       },
       top_priority_skill: {
         type: 'string',
-        description: 'El skill mas importante en el que enfocarse ahora',
+        description: 'The most important skill to focus on now',
       },
     },
     required: ['skill_stocks', 'summary', 'top_priority_skill'],
@@ -84,39 +84,39 @@ export const ANALYZE_PORTFOLIO_TOOL = {
 export const BUILD_USER_PROFILE_TOOL = {
   name: 'build_user_profile' as const,
   description:
-    'Construye el perfil del usuario cuando tengas suficiente informacion de la entrevista. Invocalo SOLO cuando tengas rol, nivel, al menos 2 herramientas y 1 goal claro.',
+    'Builds the user profile when you have enough information from the interview. Invoke ONLY when you have role, level, at least 2 tools, and 1 clear goal.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      name: { type: 'string', description: 'Nombre del usuario (o "Usuario" si no lo dijo)' },
+      name: { type: 'string', description: 'User name (or "User" if not provided)' },
       role: {
         type: 'string',
         enum: ['marketer', 'recruiter', 'developer', 'ops'],
-        description: 'Rol profesional del usuario',
+        description: 'User professional role',
       },
       seniority: {
         type: 'string',
         enum: ['junior', 'mid', 'senior'],
-        description: 'Nivel de experiencia',
+        description: 'Experience level',
       },
       stack: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Herramientas que usa actualmente',
+        description: 'Tools currently in use',
       },
       goals: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Que quiere lograr con IA',
+        description: 'What they want to achieve with AI',
       },
       pain_points: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Que le frustra o le cuesta hoy',
+        description: 'What frustrates them or is difficult today',
       },
       summary: {
         type: 'string',
-        description: 'Resumen breve del perfil del usuario (1-2 oraciones)',
+        description: 'Brief user profile summary (1-2 sentences)',
       },
     },
     required: ['name', 'role', 'seniority', 'stack', 'goals', 'pain_points', 'summary'],
@@ -139,24 +139,24 @@ export type EvaluateSourceOutput = z.infer<typeof EvaluateSourceOutputSchema>
 export const EVALUATE_SOURCE_TOOL = {
   name: 'evaluate_source' as const,
   description:
-    'Evalua la autoridad y credibilidad de una fuente de contenido. Mide cercania a la fuente primaria, autoridad del dominio, y frescura.',
+    'Evaluates the authority and credibility of a content source. Measures proximity to primary source, domain authority, and freshness.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      author: { type: 'string', nullable: true, description: 'Autor del contenido, null si no identificable' },
+      author: { type: 'string', nullable: true, description: 'Content author, null if not identifiable' },
       domain_authority: {
         type: 'string',
         enum: ['official_docs', 'major_publication', 'industry_blog', 'social_media', 'unknown'],
-        description: 'Nivel de autoridad del dominio/fuente',
+        description: 'Domain/source authority level',
       },
-      freshness_date: { type: 'string', nullable: true, description: 'Fecha de publicacion estimada (ISO), null si no detectable' },
+      freshness_date: { type: 'string', nullable: true, description: 'Estimated publication date (ISO), null if not detectable' },
       source_type: {
         type: 'string',
         enum: ['primary', 'secondary', 'opinion', 'aggregator'],
-        description: 'Tipo de fuente: primary=docs oficiales/paper, secondary=cobertura, opinion=blog personal, aggregator=compilacion',
+        description: 'Source type: primary=official docs/paper, secondary=coverage, opinion=personal blog, aggregator=compilation',
       },
-      credibility_score: { type: 'number', description: 'Credibilidad de 0 a 10 (10 = fuente oficial primaria)' },
-      credibility_reason: { type: 'string', description: 'Por que esta fuente tiene este nivel de credibilidad' },
+      credibility_score: { type: 'number', description: 'Credibility from 0 to 10 (10 = official primary source)' },
+      credibility_reason: { type: 'string', description: 'Why this source has this credibility level' },
     },
     required: ['author', 'domain_authority', 'freshness_date', 'source_type', 'credibility_score', 'credibility_reason'],
   },
@@ -203,33 +203,33 @@ export type CanonicalInsightRaw = z.infer<typeof CanonicalInsightSchema>
 export const EXTRACT_CANONICAL_INSIGHTS_TOOL = {
   name: 'extract_canonical_insights' as const,
   description:
-    'Extrae insights canonicos (Verdades Verificables) del contenido. Cada insight debe estar respaldado por evidencia textual exacta, con nivel de confianza y contradicciones detectadas.',
+    'Extracts canonical insights (Verifiable Truths) from content. Each insight must be backed by exact textual evidence, with confidence level and detected contradictions.',
   input_schema: {
     type: 'object' as const,
     properties: {
       canonical_insights: {
         type: 'array',
-        description: 'Insights canonicos extraidos del contenido',
+        description: 'Canonical insights extracted from content',
         items: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: 'Titulo conciso del insight' },
-            insight: { type: 'string', description: 'La verdad canonica destilada (1-2 oraciones)' },
+            title: { type: 'string', description: 'Concise insight title' },
+            insight: { type: 'string', description: 'The distilled canonical truth (1-2 sentences)' },
             confidence_level: {
               type: 'string',
               enum: ['high', 'medium', 'low'],
-              description: 'high=evidencia directa, medium=inferencia razonable, low=opinion o dato no verificable',
+              description: 'high=direct evidence, medium=reasonable inference, low=opinion or unverifiable data',
             },
-            confidence_score: { type: 'number', description: 'Confianza de 0 a 10' },
-            validation_reason: { type: 'string', description: 'Por que este nivel de confianza' },
+            confidence_score: { type: 'number', description: 'Confidence from 0 to 10' },
+            validation_reason: { type: 'string', description: 'Why this confidence level' },
             evidence: {
               type: 'array',
-              description: 'Citas textuales exactas que respaldan el insight',
+              description: 'Exact textual quotes supporting the insight',
               items: {
                 type: 'object',
                 properties: {
-                  exact_quote: { type: 'string', description: 'Cita textual exacta de la fuente' },
-                  inference_flag: { type: 'boolean', description: 'true si Claude dedujo esto, false si esta explicito en el texto' },
+                  exact_quote: { type: 'string', description: 'Exact textual quote from the source' },
+                  inference_flag: { type: 'boolean', description: 'true if Claude inferred this, false if explicit in the text' },
                 },
                 required: ['exact_quote', 'inference_flag'],
               },
@@ -248,7 +248,7 @@ export const EXTRACT_CANONICAL_INSIGHTS_TOOL = {
             },
             contradictions: {
               type: 'array',
-              description: 'Contradicciones detectadas con conocimiento previo',
+              description: 'Contradictions detected with prior knowledge',
               items: {
                 type: 'object',
                 properties: {
@@ -263,7 +263,7 @@ export const EXTRACT_CANONICAL_INSIGHTS_TOOL = {
           required: ['title', 'insight', 'confidence_level', 'confidence_score', 'validation_reason', 'evidence', 'related_skills', 'contradictions', 'category'],
         },
       },
-      overall_relevance: { type: 'number', description: 'Relevancia global del contenido para el usuario (0-10)' },
+      overall_relevance: { type: 'number', description: 'Overall content relevance for the user (0-10)' },
     },
     required: ['canonical_insights', 'overall_relevance'],
   },
@@ -299,21 +299,21 @@ export type GenerateProjectOutput = z.infer<typeof GenerateProjectOutputSchema>
 export const GENERATE_PROJECT_TOOL = {
   name: 'generate_project' as const,
   description:
-    'Genera un mini-proyecto practico y accionable para que el usuario practique un skill especifico. Incluye pasos concretos, recursos, y resultado esperado.',
+    'Generates a practical, actionable mini-project for the user to practice a specific skill. Includes concrete steps, resources, and expected outcome.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      title: { type: 'string', description: 'Titulo del proyecto' },
-      description: { type: 'string', description: 'Descripcion breve del proyecto (2-3 oraciones)' },
+      title: { type: 'string', description: 'Project title' },
+      description: { type: 'string', description: 'Brief project description (2-3 sentences)' },
       difficulty: {
         type: 'string',
         enum: ['beginner', 'intermediate', 'advanced'],
-        description: 'Nivel de dificultad',
+        description: 'Difficulty level',
       },
-      estimated_time: { type: 'string', description: 'Tiempo estimado (ej: "2 horas", "30 minutos")' },
+      estimated_time: { type: 'string', description: 'Estimated time (e.g., "2 hours", "30 minutes")' },
       steps: {
         type: 'array',
-        description: 'Pasos concretos del proyecto',
+        description: 'Concrete project steps',
         items: {
           type: 'object',
           properties: {
@@ -326,7 +326,7 @@ export const GENERATE_PROJECT_TOOL = {
       },
       resources: {
         type: 'array',
-        description: 'Recursos utiles',
+        description: 'Useful resources',
         items: {
           type: 'object',
           properties: {
@@ -337,8 +337,8 @@ export const GENERATE_PROJECT_TOOL = {
           required: ['title', 'url', 'type'],
         },
       },
-      expected_outcome: { type: 'string', description: 'Que va a lograr el usuario al terminar' },
-      skill_target: { type: 'string', description: 'Skill principal que se practica' },
+      expected_outcome: { type: 'string', description: 'What the user will achieve upon completion' },
+      skill_target: { type: 'string', description: 'Main skill being practiced' },
     },
     required: [
       'title',
@@ -355,23 +355,23 @@ export const GENERATE_PROJECT_TOOL = {
 
 // ── SYSTEM PROMPTS ─────────────────────────────────────────────────
 
-export const ONBOARDING_SYSTEM_PROMPT = `Eres el asistente de onboarding de Signal OS, una plataforma de aprendizaje tecnico personalizado para profesionales no tecnicos que quieren dominar IA y automatizacion.
+export const ONBOARDING_SYSTEM_PROMPT = `You are the onboarding assistant for Signal OS, a personalized technical learning platform for non-technical professionals who want to master AI and automation.
 
-Tu objetivo: conocer al usuario en 3-5 preguntas para construir su perfil de aprendizaje.
+Your goal: get to know the user in 3-5 questions to build their learning profile.
 
-Informacion que necesitas recopilar:
-1. Rol profesional (marketer, recruiter, developer, ops)
-2. Nivel de experiencia (junior, mid, senior)
-3. Herramientas que usa actualmente (stack)
-4. Que quiere lograr con IA (goals)
-5. Que le frustra o le cuesta hoy (pain_points)
+Information you need to collect:
+1. Professional role (marketer, recruiter, developer, ops)
+2. Experience level (junior, mid, senior)
+3. Tools they currently use (stack)
+4. What they want to achieve with AI (goals)
+5. What frustrates them or is difficult today (pain_points)
 
-Reglas estrictas:
-- Se conversacional, amigable y breve. Tutea al usuario.
-- Haz UNA pregunta por mensaje. No bombardees con multiples preguntas.
-- Adapta tus preguntas segun lo que responde. Si menciona su rol y herramientas en un mensaje, no vuelvas a preguntar eso.
-- Cuando tengas suficiente informacion (minimo: rol, nivel, 2+ herramientas, 1+ goal), invoca el tool build_user_profile Y agrega un mensaje de cierre diciendo que vas a generar su diagnostico.
-- No hagas mas de 5 preguntas. Si al 5to turno no tienes todo, infiere lo que falte y usa el tool.
-- Responde siempre en espanol.
-- Maximo 2-3 oraciones por mensaje. Se conciso.
-- No uses emojis.`
+Strict rules:
+- Be conversational, friendly, and brief.
+- Ask ONE question per message. Don't bombard with multiple questions.
+- Adapt your questions based on their answers. If they mention their role and tools in one message, don't ask again.
+- When you have enough information (minimum: role, level, 2+ tools, 1+ goal), invoke the build_user_profile tool AND add a closing message saying you'll generate their diagnostic.
+- Don't ask more than 5 questions. If by the 5th turn you don't have everything, infer what's missing and use the tool.
+- Respond in English.
+- Maximum 2-3 sentences per message. Be concise.
+- Don't use emojis.`

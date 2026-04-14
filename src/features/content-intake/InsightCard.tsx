@@ -2,9 +2,9 @@ import { useState } from 'react'
 import type { CanonicalInsight } from '@/entities/content/types'
 
 const CONFIDENCE_MAP: Record<string, { cls: string; label: string; dots: number }> = {
-  high: { cls: 'confidence-high', label: 'Alta confianza', dots: 4 },
-  medium: { cls: 'confidence-medium', label: 'Inferencia', dots: 3 },
-  low: { cls: 'confidence-low', label: 'Baja confianza', dots: 2 },
+  high: { cls: 'confidence-high', label: 'High confidence', dots: 4 },
+  medium: { cls: 'confidence-medium', label: 'Inference', dots: 3 },
+  low: { cls: 'confidence-low', label: 'Low confidence', dots: 2 },
 }
 
 interface InsightCardProps {
@@ -46,16 +46,16 @@ export function InsightCard({ insight }: InsightCardProps) {
       {/* Contradictions */}
       {insight.contradictions.length > 0 && (
         <div className="inference-note" style={{ marginTop: 8 }}>
-          <strong>Contradiccion:</strong> {insight.contradictions[0].description}
+          <strong>Contradiction:</strong> {insight.contradictions[0].description}
           {insight.contradictions[0].resolution && (
-            <span> — Resolucion: {insight.contradictions[0].resolution}</span>
+            <span> — Resolution: {insight.contradictions[0].resolution}</span>
           )}
         </div>
       )}
 
       {/* Evidence toggle */}
       <button className="evidence-toggle" onClick={() => setEvidenceOpen(!evidenceOpen)}>
-        {evidenceOpen ? '▾ Ocultar evidencia' : `▸ Ver evidencia (${insight.evidence.length} citas)`}
+        {evidenceOpen ? '▾ Hide evidence' : `▸ View evidence (${insight.evidence.length} quotes)`}
       </button>
 
       {/* Evidence panel */}
@@ -65,7 +65,7 @@ export function InsightCard({ insight }: InsightCardProps) {
             <div key={i} className="evidence-item" style={{ flexDirection: 'column', gap: 4 }}>
               <p className="evidence-quote">"{ev.exactQuote}"</p>
               <span className={`badge ${ev.inferenceFlag ? 'badge-medium' : 'badge-high'}`} style={{ alignSelf: 'flex-start' }}>
-                {ev.inferenceFlag ? 'Inferencia de Claude' : 'Explicito en fuente'}
+                {ev.inferenceFlag ? 'Claude inference' : 'Explicit in source'}
               </span>
             </div>
           ))}

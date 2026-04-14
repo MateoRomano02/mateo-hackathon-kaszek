@@ -7,8 +7,8 @@ import { ROUTES } from '@/shared/constants/routes'
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: 'dash' as const, label: 'Dashboard' },
-  { to: ROUTES.COURSES, icon: 'zap' as const, label: 'Mis Cursos' },
-  { to: ROUTES.CURATOR, icon: 'inbox' as const, label: 'Curador' },
+  { to: ROUTES.COURSES, icon: 'zap' as const, label: 'My Courses' },
+  { to: ROUTES.CURATOR, icon: 'inbox' as const, label: 'Curator' },
 ]
 
 export function AppShell() {
@@ -56,7 +56,7 @@ export function AppShell() {
         </div>
 
         <nav className="sidebar-nav">
-          <div className="nav-label">Navegacion</div>
+          <div className="nav-label">Navigation</div>
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -91,7 +91,7 @@ export function AppShell() {
               className="btn btn-ghost btn-sm"
               style={{ width: '100%', justifyContent: 'center', fontSize: '11px' }}
             >
-              Cerrar sesion
+              Log out
             </button>
           </div>
         </div>

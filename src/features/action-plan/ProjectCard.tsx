@@ -4,9 +4,9 @@ import { TutorChat } from './TutorChat'
 import type { GeneratedProject } from '@/entities/content/types'
 
 const DIFF_LABELS: Record<string, string> = {
-  beginner: 'Principiante',
-  intermediate: 'Intermedio',
-  advanced: 'Avanzado',
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
 }
 
 interface ProjectCardProps {
@@ -39,9 +39,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
       {/* Progress bar */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span className="card-label" style={{ margin: 0 }}>Progreso del curso</span>
+          <span className="card-label" style={{ margin: 0 }}>Course progress</span>
           <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: progressPct === 100 ? 'var(--high)' : 'var(--text2)' }}>
-            {progressPct}% — {completedSteps.length}/{project.steps.length} pasos
+            {progressPct}% — {completedSteps.length}/{project.steps.length} steps
           </span>
         </div>
         <div className="progress-container">
@@ -92,7 +92,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           {/* Resources */}
           {project.resources.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <div className="card-label">Recursos</div>
+              <div className="card-label">Resources</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {project.resources.map((r, i) => (
                   <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className="tag" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
@@ -116,16 +116,16 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button className={`btn ${tutorOpen ? 'btn-secondary' : 'btn-primary'} btn-sm`}
           onClick={() => setTutorOpen(!tutorOpen)}>
-          {tutorOpen ? 'Cerrar Tutor' : '🤖 Abrir Tutor IA'}
+          {tutorOpen ? 'Close Tutor' : '🤖 Open AI Tutor'}
         </button>
         {progressPct === 100 && (
-          <span className="badge badge-high">Curso completado!</span>
+          <span className="badge badge-high">Course completed!</span>
         )}
       </div>
 
       {/* Expected outcome */}
       <div className="action-content-box" style={{ marginTop: 12 }}>
-        <strong>Resultado esperado:</strong> {project.expectedOutcome}
+        <strong>Expected outcome:</strong> {project.expectedOutcome}
       </div>
     </div>
   )

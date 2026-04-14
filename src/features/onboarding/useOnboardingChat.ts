@@ -7,7 +7,7 @@ import type { ChatMessage } from '@/entities/user/types'
 import { useOnInit } from '@/shared/hooks/useOnInit'
 
 const INITIAL_GREETING =
-  'Hola! Soy tu copiloto en Signal OS. Voy a hacerte algunas preguntas para personalizar tu ruta de aprendizaje. Contame, en que area trabajas y cual es tu nivel de experiencia?'
+  'Hi! I\'m your copilot in Signal OS. I\'m going to ask you a few questions to personalize your learning path. Tell me, what area do you work in and what is your experience level?'
 
 function getService(mode: 'mock' | 'anthropic') {
   return mode === 'anthropic' ? anthropicAnalysisService : mockAnalysisService
@@ -96,7 +96,7 @@ export function useOnboardingChat() {
         const errorMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `Error: ${err instanceof Error ? err.message : 'Algo salio mal. Intenta de nuevo.'}`,
+          content: `Error: ${err instanceof Error ? err.message : 'Something went wrong. Please try again.'}`,
           timestamp: new Date().toISOString(),
         }
         setMessages([...updatedMessages, errorMsg])

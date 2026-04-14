@@ -19,7 +19,7 @@ export function OnboardingPage() {
           <Logo />
         </div>
         <p className="onboarding-desc">
-          Transforma el ruido informativo en una ruta de aprendizaje personalizada y accionable.
+          Turn information noise into a personalized and actionable learning path.
         </p>
         <ChatInterface />
       </div>

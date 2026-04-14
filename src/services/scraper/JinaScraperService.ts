@@ -16,7 +16,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedContent> {
   })
 
   if (!response.ok) {
-    throw new Error(`No se pudo extraer el contenido de ${url} (status ${response.status})`)
+    throw new Error(`Could not extract content from ${url} (status ${response.status})`)
   }
 
   const markdown = await response.text()
@@ -26,7 +26,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedContent> {
   const title = titleMatch?.[1] ?? url
 
   // Truncate to ~4000 chars to fit in Claude context without wasting tokens
-  const truncated = markdown.length > 4000 ? markdown.slice(0, 4000) + '\n\n[...contenido truncado]' : markdown
+  const truncated = markdown.length > 4000 ? markdown.slice(0, 4000) + '\n\n[...content truncated]' : markdown
 
   return {
     url,

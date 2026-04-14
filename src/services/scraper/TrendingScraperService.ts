@@ -114,7 +114,7 @@ export async function getTrendingForProfile(
 
   // HN: run 2 queries in parallel
   const queries = buildQueries(profile)
-  onStep?.('Buscando en Hacker News...')
+  onStep?.('Searching Hacker News...')
   try {
     const hnResults = await Promise.all(queries.slice(0, 2).map(fetchHackerNews))
     articles.push(...hnResults.flat())
@@ -124,7 +124,7 @@ export async function getTrendingForProfile(
 
   // Reddit: fetch from 1 relevant subreddit
   const subs = buildSubreddits(profile)
-  onStep?.(`Escaneando r/${subs[0]}...`)
+  onStep?.(`Scanning r/${subs[0]}...`)
   try {
     const redditResults = await fetchReddit(subs[0])
     articles.push(...redditResults)

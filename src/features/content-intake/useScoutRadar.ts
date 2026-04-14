@@ -23,7 +23,7 @@ export function useScoutRadar() {
   const service = aiMode === 'anthropic' ? anthropicAnalysisService : mockAnalysisService
 
   const addLog = (step: string, status: RadarLog['status'] = 'running') => {
-    const log: RadarLog = { id: crypto.randomUUID(), step, status, timestamp: new Date().toLocaleTimeString('es-AR') }
+    const log: RadarLog = { id: crypto.randomUUID(), step, status, timestamp: new Date().toLocaleTimeString('en-US') }
     setLogs((prev) => [...prev, log])
     return log.id
   }
@@ -41,14 +41,14 @@ export function useScoutRadar() {
 
     try {
       // Step 1: Fetch trending articles from HN + Reddit
-      const fetchId = addLog(`Buscando tendencias para ${userProfile.role} / ${userProfile.stack.slice(0, 3).join(', ')}...`)
+      const fetchId = addLog(`Searching trends for ${userProfile.role} / ${userProfile.stack.slice(0, 3).join(', ')}...`)
       setScanProgress(5)
 
       const articles: TrendingArticle[] = await getTrendingForProfile(userProfile, (step) => {
         addLog(step)
       })
       updateLog(fetchId, 'done')
-      addLog(`${articles.length} articulos encontrados`, 'done')
+      addLog(`${articles.length} articles found`, 'done')
       setScanProgress(15)
 
       // Step 2: Pick top 3 and process through Truth Pipeline
@@ -72,14 +72,14 @@ export function useScoutRadar() {
 
         try {
           // Scrape
-          const scrapeId = addLog(`Jina Scraper procesando: ${article.title.slice(0, 50)}...`)
+          const scrapeId = addLog(`Jina Scraper processing: ${article.title.slice(0, 50)}...`)
           setScanProgress(baseProgress + 5)
           const scraped = await scrapeUrl(article.url)
           updateLog(scrapeId, 'done')
           contentItem.rawContent = scraped.markdown
 
           // Evaluate source
-          const evalId = addLog(`Evaluando credibilidad de fuente: ${article.source}...`)
+          const evalId = addLog(`Evaluating source credibility: ${article.source}...`)
           setScanProgress(baseProgress + 12)
           contentItem.status = 'evaluating_source'
           const sourceMeta = await service.evaluateSource(scraped.markdown, article.url)
@@ -87,7 +87,7 @@ export function useScoutRadar() {
           contentItem.sourceMetadata = sourceMeta
 
           // Extract insights
-          const insightId = addLog(`Extrayendo verdades canonicas...`)
+          const insightId = addLog(`Extracting canonical truths...`)
           setScanProgress(baseProgress + 20)
           contentItem.status = 'extracting_insights'
           const { insights, overallRelevance } = await service.extractCanonicalInsights(scraped.markdown, sourceMeta, userProfile)
@@ -99,7 +99,7 @@ export function useScoutRadar() {
           // Only add to store if relevance > 6
           if (overallRelevance > 6) {
             addContentItem(contentItem)
-            addLog(`Relevancia ${overallRelevance.toFixed(1)}/10 — agregado al feed`, 'done')
+            addLog(`Relevance ${overallRelevance.toFixed(1)}/10 — added to feed`, 'done')
 
             // Merge skills
             for (const insight of insights) {
@@ -108,19 +108,19 @@ export function useScoutRadar() {
               }
             }
           } else {
-            addLog(`Relevancia ${overallRelevance.toFixed(1)}/10 — descartado (umbral: 6.0)`, 'done')
+            addLog(`Relevance ${overallRelevance.toFixed(1)}/10 — discarded (threshold: 6.0)`, 'done')
           }
         } catch {
-          addLog(`Error procesando: ${article.title.slice(0, 40)}`, 'error')
+          addLog(`Error processing: ${article.title.slice(0, 40)}`, 'error')
         }
 
         setScanProgress(baseProgress + 28)
       }
 
       setScanProgress(100)
-      addLog('Escaneo autónomo completo.', 'done')
+      addLog('Autonomous scan complete.', 'done')
     } catch (err) {
-      addLog(`Error fatal: ${err instanceof Error ? err.message : 'desconocido'}`, 'error')
+      addLog(`Fatal error: ${err instanceof Error ? err.message : 'unknown'}`, 'error')
     } finally {
       setTimeout(() => setIsScanning(false), 2000)
     }

@@ -40,7 +40,7 @@ export function useContentIntake() {
       // Step 1: Scrape / get raw content
       let content: string
       if (mode === 'url') {
-        setPipelineStep('Extrayendo contenido...')
+        setPipelineStep('Extracting content...')
         updateContentItem(contentItem.id, { status: 'scraping' })
         const scraped = await scrapeUrl(url.trim())
         content = scraped.markdown
@@ -51,13 +51,13 @@ export function useContentIntake() {
       }
 
       // Step 2: Evaluate source authority
-      setPipelineStep('Evaluando credibilidad de la fuente...')
+      setPipelineStep('Evaluating source credibility...')
       updateContentItem(contentItem.id, { status: 'evaluating_source' })
       const sourceMetadata = await service.evaluateSource(content, mode === 'url' ? url.trim() : undefined)
       updateContentItem(contentItem.id, { sourceMetadata })
 
       // Step 3: Extract canonical insights
-      setPipelineStep('Extrayendo verdades canonicas...')
+      setPipelineStep('Extracting canonical truths...')
       updateContentItem(contentItem.id, { status: 'extracting_insights' })
       const { insights, overallRelevance } = await service.extractCanonicalInsights(content, sourceMetadata, userProfile)
       updateContentItem(contentItem.id, {
@@ -78,7 +78,7 @@ export function useContentIntake() {
     } catch (err) {
       updateContentItem(contentItem.id, {
         status: 'error',
-        error: err instanceof Error ? err.message : 'Error al procesar contenido',
+        error: err instanceof Error ? err.message : 'Error processing content',
       })
     } finally {
       setIsProcessing(false)

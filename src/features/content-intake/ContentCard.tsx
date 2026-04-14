@@ -2,25 +2,25 @@ import type { ContentItem } from '@/entities/content/types'
 import { InsightCard } from './InsightCard'
 
 const AUTHORITY_LABELS: Record<string, string> = {
-  official_docs: 'Fuente oficial',
-  major_publication: 'Publicacion mayor',
-  industry_blog: 'Blog especializado',
-  social_media: 'Red social',
-  unknown: 'Desconocido',
+  official_docs: 'Official source',
+  major_publication: 'Major publication',
+  industry_blog: 'Industry blog',
+  social_media: 'Social media',
+  unknown: 'Unknown',
 }
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
-  primary: 'Fuente primaria',
-  secondary: 'Fuente secundaria',
+  primary: 'Primary source',
+  secondary: 'Secondary source',
   opinion: 'Opinion',
-  aggregator: 'Agregador',
+  aggregator: 'Aggregator',
 }
 
 const PIPELINE_STEPS: Record<string, string> = {
-  pending: 'En cola...',
-  scraping: 'Extrayendo contenido...',
-  evaluating_source: 'Evaluando credibilidad...',
-  extracting_insights: 'Extrayendo verdades canonicas...',
+  pending: 'Queued...',
+  scraping: 'Extracting content...',
+  evaluating_source: 'Evaluating credibility...',
+  extracting_insights: 'Extracting canonical truths...',
 }
 
 interface ContentCardProps {
@@ -32,7 +32,7 @@ export function ContentCard({ item }: ContentCardProps) {
     return (
       <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span className="analyze-spinner" style={{ width: 16, height: 16, margin: 0, borderWidth: 2 }} />
-        <span style={{ fontSize: 13, color: 'var(--text2)' }}>{PIPELINE_STEPS[item.status] ?? 'Procesando...'}</span>
+        <span style={{ fontSize: 13, color: 'var(--text2)' }}>{PIPELINE_STEPS[item.status] ?? 'Processing...'}</span>
         {item.sourceMetadata && (
           <span className="badge badge-neutral" style={{ marginLeft: 'auto' }}>
             {AUTHORITY_LABELS[item.sourceMetadata.domainAuthority]} — {item.sourceMetadata.credibilityScore.toFixed(1)}/10
@@ -45,7 +45,7 @@ export function ContentCard({ item }: ContentCardProps) {
   if (item.status === 'error') {
     return (
       <div className="card" style={{ borderColor: 'rgba(185,28,28,.3)' }}>
-        <p style={{ color: 'var(--noise)', fontSize: 13 }}>{item.error ?? 'Error desconocido'}</p>
+        <p style={{ color: 'var(--noise)', fontSize: 13 }}>{item.error ?? 'Unknown error'}</p>
       </div>
     )
   }
@@ -58,7 +58,7 @@ export function ContentCard({ item }: ContentCardProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
           {item.originalUrl && <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{item.originalUrl}</p>}
-          {meta?.author && <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>Por {meta.author}</p>}
+          {meta?.author && <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>By {meta.author}</p>}
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {meta && <span className="badge badge-neutral">{AUTHORITY_LABELS[meta.domainAuthority]}</span>}
@@ -71,7 +71,7 @@ export function ContentCard({ item }: ContentCardProps) {
       {meta && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span className="card-label" style={{ marginBottom: 0 }}>Credibilidad de fuente</span>
+            <span className="card-label" style={{ marginBottom: 0 }}>Source credibility</span>
             <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text3)' }}>{meta.credibilityScore.toFixed(1)}/10</span>
           </div>
           <div className="score-bar">
@@ -87,7 +87,7 @@ export function ContentCard({ item }: ContentCardProps) {
       {/* Canonical insights */}
       {(item.canonicalInsights?.length ?? 0) > 0 && (
         <div>
-          <div className="card-label">Verdades canonicas ({item.canonicalInsights.length})</div>
+          <div className="card-label">Canonical truths ({item.canonicalInsights.length})</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {item.canonicalInsights.map((insight) => (
               <InsightCard key={insight.id} insight={insight} />

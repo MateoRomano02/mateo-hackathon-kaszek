@@ -8,28 +8,28 @@ const simulateStream = async (text: string, onStream: (t: string) => void) => {
 }
 
 const SCRIPTED_RESPONSES = [
-  'Que bueno que te sumas! Y que herramientas usas en tu dia a dia para trabajar?',
-  'Muy buen stack. Ahora contame, que te gustaria poder hacer con IA que hoy no podes?',
-  'Entiendo perfecto. Voy a armar tu diagnostico personalizado de skills. Dame un momento...',
+  'Great to have you! What tools do you use in your day to day work?',
+  'Solid stack. Now tell me, what would you like to be able to do with AI that you can\'t today?',
+  'Got it. I\'m going to build your personalized skill diagnostic. Give me a moment...',
 ]
 
 const MOCK_SKILL_STOCKS: SkillStock[] = [
-  { id: 'sk-1', skill: 'AI Prompt Engineering', status: 'rising', rationale: 'Demanda explosiva para contenido y analisis.', priorityScore: 9.5, suggestedAction: 'Tomar proyectos reales de copywriting con IA.' },
-  { id: 'sk-2', skill: 'Marketing Automation con IA', status: 'rising', rationale: 'Make + ChatGPT reemplazan flujos manuales.', priorityScore: 9.0, suggestedAction: 'Armar un flujo automatico de lead nurturing.' },
-  { id: 'sk-3', skill: 'Analisis Predictivo', status: 'rising', rationale: 'GA4 + modelos de atribucion con IA.', priorityScore: 8.5, suggestedAction: 'Configurar un modelo de atribucion en GA4.' },
-  { id: 'sk-4', skill: 'Google Ads (Performance)', status: 'stable', rationale: 'Base solida. Esencial pero no crece.', priorityScore: 7.0, suggestedAction: 'Mantener certificaciones actualizadas.' },
-  { id: 'sk-5', skill: 'Email Marketing', status: 'stable', rationale: 'ROI alto y predecible.', priorityScore: 6.5, suggestedAction: 'Optimizar secuencias con A/B testing.' },
-  { id: 'sk-6', skill: 'Content Strategy', status: 'stable', rationale: 'Pilar del inbound. IA cambia ejecucion, no estrategia.', priorityScore: 7.2, suggestedAction: 'Integrar IA como herramienta.' },
-  { id: 'sk-7', skill: 'SEO Tecnico Manual', status: 'degrading', rationale: 'Ahrefs y Screaming Frog automatizan el 80%.', priorityScore: 4.0, suggestedAction: 'Migrar a herramientas automatizadas.' },
-  { id: 'sk-8', skill: 'A/B Testing Manual', status: 'degrading', rationale: 'Optimizely y VWO lo automatizan.', priorityScore: 3.5, suggestedAction: 'Aprender testing automatizado.' },
-  { id: 'sk-9', skill: 'Reportes Manuales en Excel', status: 'gone', rationale: 'Dashboards en tiempo real los reemplazaron.', priorityScore: 1.0, suggestedAction: 'Archivar. Usar dashboards.' },
-  { id: 'sk-10', skill: 'Keyword Stuffing', status: 'gone', rationale: 'Google lo penaliza. Obsoleto.', priorityScore: 0, suggestedAction: 'Eliminar de cualquier estrategia.' },
+  { id: 'sk-1', skill: 'AI Prompt Engineering', status: 'rising', rationale: 'Explosive demand for content and analysis.', priorityScore: 9.5, suggestedAction: 'Take on real AI copywriting projects.' },
+  { id: 'sk-2', skill: 'Marketing Automation with AI', status: 'rising', rationale: 'Make + ChatGPT replace manual workflows.', priorityScore: 9.0, suggestedAction: 'Build an automated lead nurturing flow.' },
+  { id: 'sk-3', skill: 'Predictive Analytics', status: 'rising', rationale: 'GA4 + AI attribution models.', priorityScore: 8.5, suggestedAction: 'Set up an attribution model in GA4.' },
+  { id: 'sk-4', skill: 'Google Ads (Performance)', status: 'stable', rationale: 'Solid foundation. Essential but not growing.', priorityScore: 7.0, suggestedAction: 'Keep certifications up to date.' },
+  { id: 'sk-5', skill: 'Email Marketing', status: 'stable', rationale: 'High and predictable ROI.', priorityScore: 6.5, suggestedAction: 'Optimize sequences with A/B testing.' },
+  { id: 'sk-6', skill: 'Content Strategy', status: 'stable', rationale: 'Inbound pillar. AI changes execution, not strategy.', priorityScore: 7.2, suggestedAction: 'Integrate AI as a tool.' },
+  { id: 'sk-7', skill: 'Manual Technical SEO', status: 'degrading', rationale: 'Ahrefs and Screaming Frog automate 80%.', priorityScore: 4.0, suggestedAction: 'Migrate to automated tools.' },
+  { id: 'sk-8', skill: 'Manual A/B Testing', status: 'degrading', rationale: 'Optimizely and VWO automate it.', priorityScore: 3.5, suggestedAction: 'Learn automated testing.' },
+  { id: 'sk-9', skill: 'Manual Excel Reports', status: 'gone', rationale: 'Real-time dashboards replaced them.', priorityScore: 1.0, suggestedAction: 'Archive. Use dashboards.' },
+  { id: 'sk-10', skill: 'Keyword Stuffing', status: 'gone', rationale: 'Google penalizes it. Obsolete.', priorityScore: 0, suggestedAction: 'Remove from any strategy.' },
 ]
 
 export const mockAnalysisService: AIAnalysisService = {
   async analyzeOnboarding(data: OnboardingData): Promise<UserProfile> {
     await delay(600)
-    return { id: crypto.randomUUID(), name: 'Usuario', role: data.role, seniority: data.seniority, stack: data.stack, createdAt: new Date().toISOString() }
+    return { id: crypto.randomUUID(), name: 'User', role: data.role, seniority: data.seniority, stack: data.stack, createdAt: new Date().toISOString() }
   },
 
   async analyzeSkillPortfolio(): Promise<SkillStock[]> {
@@ -45,9 +45,9 @@ export const mockAnalysisService: AIAnalysisService = {
     const userMsgs = messages.filter((m) => m.role === 'user')
     const turn = userMsgs.length - 1
     if (turn >= 2) {
-      const text = 'Excelente! Ya tengo tu perfil. Generando diagnostico...'
+      const text = 'Excellent! I have your profile. Generating diagnostic...'
       await simulateStream(text, onStream)
-      return { type: 'profile_complete', profile: { id: crypto.randomUUID(), name: 'Usuario', role: 'marketer', seniority: 'mid', stack: ['Google Ads', 'Meta Ads', 'ChatGPT', 'GA4'], goals: ['Automatizar campanas'], painPoints: ['Tareas repetitivas'], summary: 'Marketer mid-level buscando integrar IA.', createdAt: new Date().toISOString() }, content: text }
+      return { type: 'profile_complete', profile: { id: crypto.randomUUID(), name: 'User', role: 'marketer', seniority: 'mid', stack: ['Google Ads', 'Meta Ads', 'ChatGPT', 'GA4'], goals: ['Automate campaigns'], painPoints: ['Repetitive tasks'], summary: 'Mid-level marketer looking to integrate AI.', createdAt: new Date().toISOString() }, content: text }
     }
     const text = SCRIPTED_RESPONSES[turn] ?? SCRIPTED_RESPONSES[SCRIPTED_RESPONSES.length - 1]
     await simulateStream(text, onStream)
@@ -62,7 +62,7 @@ export const mockAnalysisService: AIAnalysisService = {
       freshnessDate: '2026-03-15',
       sourceType: 'secondary',
       credibilityScore: 7.5,
-      credibilityReason: 'Blog especializado con track record en cobertura de IA para marketing. Fuente secundaria que referencia datos de plataformas oficiales.',
+      credibilityReason: 'Specialized blog with track record in AI marketing coverage. Secondary source referencing data from official platforms.',
     }
   },
 
@@ -73,38 +73,38 @@ export const mockAnalysisService: AIAnalysisService = {
       insights: [
         {
           id: crypto.randomUUID(),
-          title: 'Advantage+ de Meta reemplaza la segmentacion manual',
-          insight: 'Meta ha migrado la mayoria de sus campanas a Advantage+, un sistema de IA que automatiza audiencias, creativos y pujas. La segmentacion manual pierde efectividad frente al algoritmo.',
+          title: 'Meta Advantage+ replaces manual targeting',
+          insight: 'Meta has migrated most of its campaigns to Advantage+, an AI system that automates audiences, creatives, and bids. Manual targeting loses effectiveness against the algorithm.',
           confidenceLevel: 'high',
           confidenceScore: 9.0,
-          validationReason: 'Respaldado por anuncios oficiales de Meta y datos de rendimiento publicados.',
+          validationReason: 'Backed by official Meta announcements and published performance data.',
           evidence: [
             { exactQuote: 'Advantage+ campaigns now account for over 60% of ad spend on Meta platforms', inferenceFlag: false },
             { exactQuote: 'Manual audience targeting showed 23% lower ROAS compared to AI-optimized campaigns in Q4 2025', inferenceFlag: false },
           ],
           relatedSkills: [
-            { skill: 'Marketing Automation con IA', statusImpact: 'rising', reason: 'Advantage+ es un caso de uso directo de automatizacion con IA en ads.' },
-            { skill: 'Meta Ads Manual Targeting', statusImpact: 'degrading', reason: 'La segmentacion manual pierde efectividad vs. el algoritmo de Meta.' },
+            { skill: 'Marketing Automation with AI', statusImpact: 'rising', reason: 'Advantage+ is a direct use case of AI automation in ads.' },
+            { skill: 'Meta Ads Manual Targeting', statusImpact: 'degrading', reason: 'Manual targeting loses effectiveness vs. Meta\'s algorithm.' },
           ],
           contradictions: [],
           category: 'news',
         },
         {
           id: crypto.randomUUID(),
-          title: 'El prompt engineering para ads genera ROI medible',
-          insight: 'Equipos que usan prompts estructurados para generar variantes de copy publicitario reducen el tiempo de produccion creativa en un 70% y mejoran CTR un 15% en promedio.',
+          title: 'Prompt engineering for ads generates measurable ROI',
+          insight: 'Teams using structured prompts for ad copy variants reduce creative production time by 70% and improve CTR by 15% on average.',
           confidenceLevel: 'medium',
           confidenceScore: 7.0,
-          validationReason: 'Datos de case studies, no de estudios controlados. Muestra de empresas limitada.',
+          validationReason: 'Case study data, not controlled studies. Limited company sample.',
           evidence: [
             { exactQuote: 'Teams using structured prompts for ad copy generation reduced creative production time by 70%', inferenceFlag: false },
             { exactQuote: 'The resulting AI-generated variants showed an average 15% improvement in CTR', inferenceFlag: false },
           ],
           relatedSkills: [
-            { skill: 'AI Prompt Engineering', statusImpact: 'rising', reason: 'Evidencia directa de que prompting genera resultados medibles en marketing.' },
+            { skill: 'AI Prompt Engineering', statusImpact: 'rising', reason: 'Direct evidence that prompting generates measurable marketing results.' },
           ],
           contradictions: [
-            { description: 'Algunos creativos argumentan que el copy generado por IA carece de "voz de marca" autentica.', resolution: 'El articulo sugiere usar IA para variantes, no para reemplazar la estrategia creativa.' },
+            { description: 'Some creatives argue that AI-generated copy lacks an authentic "brand voice".', resolution: 'The article suggests using AI for variants, not to replace creative strategy.' },
           ],
           category: 'case_study',
         },
@@ -115,19 +115,19 @@ export const mockAnalysisService: AIAnalysisService = {
   async generateProject(): Promise<GeneratedProject> {
     await delay(1500)
     return {
-      id: crypto.randomUUID(), title: 'Crea tu primer flujo de ads con IA', description: 'Construi un flujo en Make que genere variantes de copy con Claude.', difficulty: 'beginner', estimatedTime: '2 horas',
+      id: crypto.randomUUID(), title: 'Create your first AI ad flow', description: 'Build a flow in Make that generates copy variants with Claude.', difficulty: 'beginner', estimatedTime: '2 hours',
       steps: [
-        { step: 1, title: 'Crear cuenta en Make', description: 'Registrate en make.com y crea un escenario nuevo.' },
-        { step: 2, title: 'Configurar trigger', description: 'Usa Google Sheet como input: producto, audiencia, tono.' },
-        { step: 3, title: 'Conectar Claude', description: 'Modulo HTTP que llama a la API de Anthropic.' },
-        { step: 4, title: 'Generar variantes', description: 'Prompt para 5 variantes de headlines + descriptions.' },
-        { step: 5, title: 'Output a Sheet', description: 'Resultados a otra hoja del Google Sheet.' },
+        { step: 1, title: 'Create a Make account', description: 'Sign up at make.com and create a new scenario.' },
+        { step: 2, title: 'Set up trigger', description: 'Use Google Sheet as input: product, audience, tone.' },
+        { step: 3, title: 'Connect Claude', description: 'HTTP module that calls the Anthropic API.' },
+        { step: 4, title: 'Generate variants', description: 'Prompt for 5 headline + description variants.' },
+        { step: 5, title: 'Output to Sheet', description: 'Results to another tab in the Google Sheet.' },
       ],
       resources: [
         { title: 'Make.com Tutorials', url: 'https://www.make.com/en/help/tutorials', type: 'tutorial' },
         { title: 'Anthropic API Docs', url: 'https://docs.anthropic.com', type: 'documentation' },
       ],
-      expectedOutcome: 'Flujo funcional que genera copy de ads automaticamente.', skillTarget: 'AI Prompt Engineering', createdAt: new Date().toISOString(),
+      expectedOutcome: 'A working flow that automatically generates ad copy.', skillTarget: 'AI Prompt Engineering', createdAt: new Date().toISOString(),
     }
   },
 }

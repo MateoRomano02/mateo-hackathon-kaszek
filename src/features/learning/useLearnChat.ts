@@ -20,36 +20,36 @@ function buildLearnPrompt(
   resourceContent: string,
   userProfile: { role: string; seniority: string; stack: string[]; goals?: string[] },
 ) {
-  return `Eres el tutor de Signal OS. Ensenas de forma CONCISA y PRACTICA.
+  return `You are the Signal OS tutor. You teach in a CONCISE and PRACTICAL way.
 
-RECURSO: ${resourceTitle}
-CONTENIDO: ${resourceContent.slice(0, 2500)}
+RESOURCE: ${resourceTitle}
+CONTENT: ${resourceContent.slice(0, 2500)}
 
-ALUMNO: ${userProfile.role} / ${userProfile.seniority} / Stack: ${userProfile.stack.join(', ')}
+STUDENT: ${userProfile.role} / ${userProfile.seniority} / Stack: ${userProfile.stack.join(', ')}
 
-FORMATO (respeta estrictamente):
+FORMAT (follow strictly):
 
-## Por que te importa
-2-3 oraciones MAX conectando con su stack. Sin relleno.
-
----
-
-## Conceptos clave
-Lista de 2-3 conceptos. Cada uno: **nombre** — 1 oracion de explicacion + 1 ejemplo concreto para su rol. Incluye links relevantes si los hay en el contenido.
+## Why this matters to you
+2-3 sentences MAX connecting with their stack. No filler.
 
 ---
 
-## Como aplica a tu trabajo
-2-3 oraciones especificas. Menciona herramientas de su stack por nombre.
+## Key concepts
+List of 2-3 concepts. Each one: **name** — 1 sentence explanation + 1 concrete example for their role. Include relevant links if available in the content.
 
 ---
 
-## Accionables
-1. **Titulo** — Descripcion concreta. Dificultad: facil/medio/avanzado. Tiempo: X min.
-2. **Titulo** — Descripcion concreta. Dificultad: facil/medio/avanzado. Tiempo: X min.
-3. **Titulo** — Descripcion concreta. Dificultad: facil/medio/avanzado. Tiempo: X min.
+## How this applies to your work
+2-3 specific sentences. Mention tools from their stack by name.
 
-REGLAS: espanol, directo, sin frases de relleno, usa markdown (##, **, ---, listas). Incluye URLs/links del contenido original cuando sean utiles. MAXIMO 400 palabras en total.`
+---
+
+## Action Items
+1. **Title** — Concrete description. Difficulty: easy/medium/advanced. Time: X min.
+2. **Title** — Concrete description. Difficulty: easy/medium/advanced. Time: X min.
+3. **Title** — Concrete description. Difficulty: easy/medium/advanced. Time: X min.
+
+RULES: English, direct, no filler phrases, use markdown (##, **, ---, lists). Include URLs/links from the original content when useful. MAXIMUM 400 words total.`
 }
 
 export function useLearnChat(resourceTitle: string, resourceContent: string) {
@@ -73,7 +73,7 @@ export function useLearnChat(resourceTitle: string, resourceContent: string) {
           model: 'claude-sonnet-4-6',
           max_tokens: 2048,
           system: buildLearnPrompt(resourceTitle, resourceContent, userProfile),
-          messages: [{ role: 'user', content: 'Ensenname este recurso. Empieza con la Fase 1: Contexto.' }],
+          messages: [{ role: 'user', content: 'Teach me this resource. Start with Phase 1: Context.' }],
         })
 
         let accumulated = ''
@@ -93,13 +93,13 @@ export function useLearnChat(resourceTitle: string, resourceContent: string) {
         await new Promise((r) => setTimeout(r, 1500))
         setMessages([{
           id: crypto.randomUUID(), role: 'assistant',
-          content: `**Por que te importa esto**\n\nComo ${userProfile.role} ${userProfile.seniority}, este recurso toca directamente como vas a trabajar en los proximos meses. ${resourceTitle} no es solo una noticia — es un cambio en como se estructura la industria.\n\n---\n\n**Conceptos clave**\n\n1. **Automatizacion de procesos**: Las herramientas que hoy usas manualmente estan siendo reemplazadas por pipelines automaticos. Esto no elimina tu rol, lo transforma.\n\n2. **Decision basada en datos**: Ya no alcanza con intuicion. Las plataformas premian a quienes entienden metricas en tiempo real.\n\n3. **Integracion cross-plataforma**: Las herramientas que no se conectan entre si van a quedar obsoletas.\n\n---\n\n**Como impacta tu trabajo**\n\nSi hoy usas ${userProfile.stack[0] || 'herramientas manuales'}, esto significa que la proxima iteracion de tu workflow probablemente incluya un componente de IA. No necesitas ser developer — necesitas entender que automatizar y que mantener humano.\n\n---\n\n**Action Items**\n\n1. **Audita tu flujo actual** — Mapea las 5 tareas que mas tiempo te toman esta semana. Dificultad: facil. Tiempo: 30 min.\n\n2. **Prueba una automatizacion simple** — Toma la tarea mas repetitiva y armala en Zapier/Make con un trigger basico. Dificultad: medio. Tiempo: 1 hora.\n\n3. **Analiza un competidor** — Busca como una empresa similar a la tuya ya implemento IA en su stack. Dificultad: facil. Tiempo: 45 min.`,
+          content: `**Why this matters to you**\n\nAs a ${userProfile.role} ${userProfile.seniority}, this resource directly touches how you'll work in the coming months. ${resourceTitle} is not just news — it's a shift in how the industry is structured.\n\n---\n\n**Key concepts**\n\n1. **Process automation**: The tools you use manually today are being replaced by automated pipelines. This doesn't eliminate your role, it transforms it.\n\n2. **Data-driven decisions**: Intuition alone is no longer enough. Platforms reward those who understand real-time metrics.\n\n3. **Cross-platform integration**: Tools that don't connect with each other will become obsolete.\n\n---\n\n**How this impacts your work**\n\nIf you currently use ${userProfile.stack[0] || 'manual tools'}, the next iteration of your workflow will likely include an AI component. You don't need to be a developer — you need to understand what to automate and what to keep human.\n\n---\n\n**Action Items**\n\n1. **Audit your current workflow** — Map the 5 tasks that take you the most time this week. Difficulty: easy. Time: 30 min.\n\n2. **Try a simple automation** — Take your most repetitive task and build it in Zapier/Make with a basic trigger. Difficulty: medium. Time: 1 hour.\n\n3. **Analyze a competitor** — Find how a company similar to yours has already implemented AI in their stack. Difficulty: easy. Time: 45 min.`,
         }])
       }
     } catch (err) {
       setMessages([{
         id: crypto.randomUUID(), role: 'assistant',
-        content: `Error: ${err instanceof Error ? err.message : 'No se pudo iniciar la leccion.'}`,
+        content: `Error: ${err instanceof Error ? err.message : 'Could not start the lesson.'}`,
       }])
     } finally {
       setStreamingText('')
@@ -124,7 +124,7 @@ export function useLearnChat(resourceTitle: string, resourceContent: string) {
           content: m.content,
         }))
         if (apiMessages[0].role === 'assistant') {
-          apiMessages.unshift({ role: 'user', content: 'Ensenname este recurso.' })
+          apiMessages.unshift({ role: 'user', content: 'Teach me this resource.' })
         }
 
         const stream = client.messages.stream({
@@ -149,11 +149,11 @@ export function useLearnChat(resourceTitle: string, resourceContent: string) {
         await new Promise((r) => setTimeout(r, 800))
         setMessages([...updated, {
           id: crypto.randomUUID(), role: 'assistant',
-          content: 'Buena pregunta. Pensalo asi: este concepto aplica directamente a tu flujo diario. La clave es que no necesitas implementar todo de golpe — empeza con un caso pequeño y medí el impacto antes de escalar.',
+          content: 'Great question. Think about it this way: this concept applies directly to your daily workflow. The key is that you don\'t need to implement everything at once — start with a small case and measure the impact before scaling.',
         }])
       }
     } catch {
-      setMessages([...updated, { id: crypto.randomUUID(), role: 'assistant', content: 'Error al responder. Intenta de nuevo.' }])
+      setMessages([...updated, { id: crypto.randomUUID(), role: 'assistant', content: 'Error responding. Please try again.' }])
     } finally {
       setStreamingText('')
       setIsTeaching(false)

@@ -42,7 +42,7 @@ export function FeedPage() {
     <>
       <div className="page-header">
         <h1 className="page-title">Feed</h1>
-        <p className="page-subtitle">Tu radar de tendencias personalizado.</p>
+        <p className="page-subtitle">Your personalized trend radar.</p>
       </div>
 
       {/* View switcher */}
@@ -50,7 +50,7 @@ export function FeedPage() {
         {([
           { id: 'radar' as View, label: 'Scout Radar' },
           { id: 'trends' as View, label: 'Techmeme' },
-          { id: 'manual' as View, label: 'URL Manual' },
+          { id: 'manual' as View, label: 'Manual URL' },
         ]).map((v) => (
           <button key={v.id}
             className={view === v.id ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
@@ -69,13 +69,13 @@ export function FeedPage() {
           {loadingTrends ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 60 }}>
               <span className="analyze-spinner" style={{ width: 32, height: 32, margin: 0 }} />
-              <span style={{ color: 'var(--text2)', fontSize: 13 }}>Cargando Techmeme...</span>
+              <span style={{ color: 'var(--text2)', fontSize: 13 }}>Loading Techmeme...</span>
             </div>
           ) : trends.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📰</div>
-              <div className="empty-title">No se pudieron cargar tendencias</div>
-              <div className="empty-desc">Usa el Scout Radar en su lugar.</div>
+              <div className="empty-title">Could not load trends</div>
+              <div className="empty-desc">Use the Scout Radar instead.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -95,7 +95,7 @@ export function FeedPage() {
                   </div>
                   <button className="btn btn-primary btn-sm" onClick={() => handleLearn(trend)}
                     disabled={scrapingUrl === trend.url} style={{ flexShrink: 0 }}>
-                    {scrapingUrl === trend.url ? '...' : 'Aprender'}
+                    {scrapingUrl === trend.url ? '...' : 'Learn'}
                   </button>
                 </div>
               ))}

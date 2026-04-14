@@ -13,15 +13,15 @@ export function CoursesPage() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Mis Cursos</h1>
-        <p className="page-subtitle">Recursos que empezaste a aprender. Tu progreso se guarda automaticamente.</p>
+        <h1 className="page-title">My Courses</h1>
+        <p className="page-subtitle">Resources you started learning. Your progress is saved automatically.</p>
       </div>
 
       {savedCourses.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📚</div>
-          <div className="empty-title">Sin cursos guardados</div>
-          <div className="empty-desc">Cuando clickeas "Aprender" en una tendencia, el recurso se guarda aca automaticamente.</div>
+          <div className="empty-title">No saved courses</div>
+          <div className="empty-desc">When you click "Learn" on a trend, the resource is saved here automatically.</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -37,10 +37,10 @@ export function CoursesPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{course.title}</h3>
                   <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
-                    {steps.length > 0 ? `${steps.length} accion${steps.length > 1 ? 'es' : ''} completada${steps.length > 1 ? 's' : ''}` : 'Sin progreso aun'}
+                    {steps.length > 0 ? `${steps.length} action${steps.length > 1 ? 's' : ''} completed` : 'No progress yet'}
                   </p>
                 </div>
-                <button className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Continuar</button>
+                <button className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Continue</button>
               </div>
             )
           })}

@@ -44,7 +44,7 @@ export function OnboardingForm() {
           ))}
         </div>
         <p className="text-xs text-zinc-500">
-          MVP: Solo Marketer disponible. Proximamente: Recruiter, Developer, Ops.
+          MVP: Only Marketer available. Coming soon: Recruiter, Developer, Ops.
         </p>
       </section>
 
@@ -96,8 +96,7 @@ export function OnboardingForm() {
         </div>
         {selectedStack.length > 0 && (
           <p className="text-xs text-zinc-500">
-            {selectedStack.length} herramienta{selectedStack.length > 1 ? 's' : ''} seleccionada
-            {selectedStack.length > 1 ? 's' : ''}
+            {selectedStack.length} tool{selectedStack.length > 1 ? 's' : ''} selected
           </p>
         )}
       </section>
@@ -109,7 +108,7 @@ export function OnboardingForm() {
         className="w-full cursor-pointer"
         size="lg"
       >
-        {isLoading ? 'Generando diagnostico...' : 'Generar mi diagnostico'}
+        {isLoading ? 'Generating diagnostic...' : 'Generate my diagnostic'}
       </Button>
     </div>
   )

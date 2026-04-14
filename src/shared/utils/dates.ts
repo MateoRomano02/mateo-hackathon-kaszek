@@ -1,4 +1,4 @@
-const LOCALE = 'es-AR'
+const LOCALE = 'en-US'
 
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(LOCALE)

@@ -1,7 +1,7 @@
 export type ErrorPersonalizado = { estado?: number; mensaje: string }
 
 export const obtenerMensajeError = (error: unknown): ErrorPersonalizado => {
-  let mensaje = 'Ocurrio un error. Consulte al administrador del sistema'
+  let mensaje = 'An error occurred. Please contact the system administrator'
   let estado = 0
 
   if (
@@ -14,15 +14,15 @@ export const obtenerMensajeError = (error: unknown): ErrorPersonalizado => {
     const httpError = error as { status: number; message?: string }
     estado = httpError.status
     if (estado >= 400 && estado < 500) {
-      mensaje = httpError.message ?? 'No se pudo completar la operacion.'
+      mensaje = httpError.message ?? 'Could not complete the operation.'
     } else {
-      mensaje = 'Ocurrio un error al conectarse al servicio de IA. Intente nuevamente mas tarde'
+      mensaje = 'An error occurred connecting to the AI service. Please try again later'
     }
     if (estado === 401) {
-      mensaje = 'API Key invalida o no configurada.'
+      mensaje = 'Invalid or unconfigured API Key.'
     }
     if (estado === 429) {
-      mensaje = 'Demasiadas solicitudes. Espere un momento.'
+      mensaje = 'Too many requests. Please wait a moment.'
     }
   } else if (error instanceof Error) {
     mensaje = error.message

@@ -44,7 +44,7 @@ export const anthropicAnalysisService: AIAnalysisService = {
   async analyzeOnboarding(data: OnboardingData): Promise<UserProfile> {
     return {
       id: crypto.randomUUID(),
-      name: 'Usuario',
+      name: 'User',
       role: data.role,
       seniority: data.seniority,
       stack: data.stack,
@@ -62,19 +62,19 @@ export const anthropicAnalysisService: AIAnalysisService = {
         tool_choice: { type: 'tool', name: 'analyze_skill_portfolio' },
         messages: [{
           role: 'user',
-          content: `Analiza el portafolio de skills de este profesional.
+          content: `Analyze this professional's skill portfolio.
 
-Perfil: ${profile.role} / ${profile.seniority}
+Profile: ${profile.role} / ${profile.seniority}
 Stack: ${profile.stack.join(', ')}
-${profile.goals?.length ? `Objetivos: ${profile.goals.join(', ')}` : ''}
-${profile.painPoints?.length ? `Frustraciones: ${profile.painPoints.join(', ')}` : ''}
+${profile.goals?.length ? `Goals: ${profile.goals.join(', ')}` : ''}
+${profile.painPoints?.length ? `Frustrations: ${profile.painPoints.join(', ')}` : ''}
 
-Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
+Include 8-12 skills. priority_score 0-10. All in English.`,
         }],
       })
 
       const toolBlock = extractToolBlock(response.content, 'analyze_skill_portfolio')
-      if (!toolBlock) throw new Error('Claude no devolvio tool_use')
+      if (!toolBlock) throw new Error('Claude did not return tool_use')
       const parsed = AnalyzePortfolioOutputSchema.parse(toolBlock.input)
       return parsed.skill_stocks.map((s) => ({
         id: crypto.randomUUID(), skill: s.skill, status: s.status,
@@ -94,7 +94,7 @@ Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
       const client = getClient()
       const apiMessages: Anthropic.MessageParam[] = []
       if (messages.length > 0 && messages[0].role === 'assistant') {
-        apiMessages.push({ role: 'user', content: '[El usuario abre Signal OS por primera vez.]' })
+        apiMessages.push({ role: 'user', content: '[The user opens Signal OS for the first time.]' })
       }
       for (const msg of messages) apiMessages.push({ role: msg.role, content: msg.content })
 
@@ -119,7 +119,7 @@ Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
             seniority: parsed.seniority, stack: parsed.stack, goals: parsed.goals,
             painPoints: parsed.pain_points, summary: parsed.summary, createdAt: new Date().toISOString(),
           },
-          content: extractTextBlock(blocks)?.text || 'Perfil creado!',
+          content: extractTextBlock(blocks)?.text || 'Profile created!',
         }
       }
       return { type: 'message', content: extractTextBlock(blocks)?.text || '' }
@@ -141,32 +141,32 @@ Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
         tool_choice: { type: 'tool', name: 'evaluate_source' },
         messages: [{
           role: 'user',
-          content: `Eres un analista de credibilidad de fuentes para Signal OS (Truth Layer).
+          content: `You are a source credibility analyst for Signal OS (Truth Layer).
 
-Evalua la autoridad y credibilidad de esta fuente.
-${url ? `URL: ${url}` : '(Texto pegado directamente, sin URL)'}
+Evaluate the authority and credibility of this source.
+${url ? `URL: ${url}` : '(Text pasted directly, no URL)'}
 
-Criterios:
-- official_docs = documentacion oficial, papers, anuncios de empresa
+Criteria:
+- official_docs = official documentation, papers, company announcements
 - major_publication = TechCrunch, Wired, HBR, MIT Tech Review
-- industry_blog = blogs de profesionales reconocidos
-- social_media = tweets, posts de LinkedIn, hilos
-- primary = la fuente origina la informacion
-- secondary = reporta/comenta sobre informacion primaria
-- opinion = analisis subjetivo
-- aggregator = compila de multiples fuentes
+- industry_blog = blogs from recognized professionals
+- social_media = tweets, LinkedIn posts, threads
+- primary = the source originates the information
+- secondary = reports/comments on primary information
+- opinion = subjective analysis
+- aggregator = compiles from multiple sources
 
-Contenido:
+Content:
 ---
 ${content.slice(0, 3000)}
 ---
 
-Responde en espanol.`,
+Respond in English.`,
         }],
       })
 
       const toolBlock = extractToolBlock(response.content, 'evaluate_source')
-      if (!toolBlock) throw new Error('Claude no evaluo la fuente')
+      if (!toolBlock) throw new Error('Claude did not evaluate the source')
       const parsed = EvaluateSourceOutputSchema.parse(toolBlock.input)
 
       return {
@@ -199,31 +199,31 @@ Responde en espanol.`,
         tool_choice: { type: 'tool', name: 'extract_canonical_insights' },
         messages: [{
           role: 'user',
-          content: `Eres el Judgment Engine de Signal OS. Tu trabajo es extraer VERDADES CANONICAS de este contenido.
+          content: `You are the Judgment Engine of Signal OS. Your job is to extract CANONICAL TRUTHS from this content.
 
-NO resumas. DESTILA. Cada insight debe ser una verdad verificable, no una opinion.
+DO NOT summarize. DISTILL. Each insight must be a verifiable truth, not an opinion.
 
-Evaluacion de fuente previa:
-- Autoridad: ${sourceMetadata.domainAuthority}
-- Tipo: ${sourceMetadata.sourceType}
-- Credibilidad: ${sourceMetadata.credibilityScore}/10
-- Razon: ${sourceMetadata.credibilityReason}
+Prior source evaluation:
+- Authority: ${sourceMetadata.domainAuthority}
+- Type: ${sourceMetadata.sourceType}
+- Credibility: ${sourceMetadata.credibilityScore}/10
+- Reason: ${sourceMetadata.credibilityReason}
 
-Perfil del usuario:
-- Rol: ${profile.role} / ${profile.seniority}
+User profile:
+- Role: ${profile.role} / ${profile.seniority}
 - Stack: ${profile.stack.join(', ')}
-${profile.goals?.length ? `- Objetivos: ${profile.goals.join(', ')}` : ''}
+${profile.goals?.length ? `- Goals: ${profile.goals.join(', ')}` : ''}
 
-Reglas:
-- Cada insight DEBE tener al menos 1 cita textual exacta del contenido original (evidence).
-- inference_flag = true SOLO si Claude dedujo algo no explicito en el texto.
-- confidence: high = dato verificable con fuente primaria, medium = inferencia razonable, low = opinion o dato sin respaldo.
-- Detecta contradicciones con conocimiento previo comun del area.
-- Extrae 2-5 insights. Calidad > cantidad.
-- related_skills: conecta cada insight con skills del portafolio del usuario.
-- Todo en espanol.
+Rules:
+- Each insight MUST have at least 1 exact textual quote from the original content (evidence).
+- inference_flag = true ONLY if Claude inferred something not explicit in the text.
+- confidence: high = verifiable data with primary source, medium = reasonable inference, low = opinion or unsupported data.
+- Detect contradictions with common prior knowledge in the field.
+- Extract 2-5 insights. Quality > quantity.
+- related_skills: connect each insight with skills from the user's portfolio.
+- All in English.
 
-Contenido:
+Content:
 ---
 ${content.slice(0, 3500)}
 ---`,
@@ -231,7 +231,7 @@ ${content.slice(0, 3500)}
       })
 
       const toolBlock = extractToolBlock(response.content, 'extract_canonical_insights')
-      if (!toolBlock) throw new Error('Claude no extrajo insights')
+      if (!toolBlock) throw new Error('Claude did not extract insights')
       const parsed = ExtractInsightsOutputSchema.parse(toolBlock.input)
 
       const insights: CanonicalInsight[] = parsed.canonical_insights.map((ci) => ({
@@ -264,15 +264,15 @@ ${content.slice(0, 3500)}
         tool_choice: { type: 'tool', name: 'generate_project' },
         messages: [{
           role: 'user',
-          content: `Genera un mini-proyecto practico para el skill: ${skillName}
-Perfil: ${profile.role} / ${profile.seniority} / Stack: ${profile.stack.join(', ')}
-${profile.goals?.length ? `Objetivos: ${profile.goals.join(', ')}` : ''}
-Completable en <3 horas. Pasos concretos. Recursos reales. Todo en espanol.`,
+          content: `Generate a practical mini-project for the skill: ${skillName}
+Profile: ${profile.role} / ${profile.seniority} / Stack: ${profile.stack.join(', ')}
+${profile.goals?.length ? `Goals: ${profile.goals.join(', ')}` : ''}
+Completable in <3 hours. Concrete steps. Real resources. All in English.`,
         }],
       })
 
       const toolBlock = extractToolBlock(response.content, 'generate_project')
-      if (!toolBlock) throw new Error('Claude no genero el proyecto')
+      if (!toolBlock) throw new Error('Claude did not generate the project')
       const parsed = GenerateProjectOutputSchema.parse(toolBlock.input)
       return {
         id: crypto.randomUUID(), title: parsed.title, description: parsed.description,

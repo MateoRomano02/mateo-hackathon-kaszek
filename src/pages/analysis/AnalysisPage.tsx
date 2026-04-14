@@ -17,32 +17,32 @@ export function AnalysisPage() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Analisis</h1>
+        <h1 className="page-title">Analysis</h1>
         <p className="page-subtitle">
-          Todas las verdades canonicas extraidas de tus fuentes, ordenadas por confianza.
+          All canonical truths extracted from your sources, sorted by confidence.
         </p>
       </div>
 
       {allInsights.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">?</div>
-          <div className="empty-title">Sin insights todavia</div>
-          <div className="empty-desc">Analiza contenido en el Truth Pipeline para ver insights canonicos aqui.</div>
+          <div className="empty-title">No insights yet</div>
+          <div className="empty-desc">Analyze content in the Truth Pipeline to see canonical insights here.</div>
         </div>
       ) : (
         <>
           {/* Stats */}
           <div className="grid-3" style={{ marginBottom: 24 }}>
             <div className="card stat-highlight">
-              <div className="card-label">Insights totales</div>
+              <div className="card-label">Total insights</div>
               <div className="card-value">{allInsights.length}</div>
             </div>
             <div className="card">
-              <div className="card-label">Alta confianza</div>
+              <div className="card-label">High confidence</div>
               <div className="card-value" style={{ color: 'var(--high)' }}>{highConfidence}</div>
             </div>
             <div className="card">
-              <div className="card-label">Con contradicciones</div>
+              <div className="card-label">With contradictions</div>
               <div className="card-value" style={{ color: 'var(--noise)' }}>{withContradictions}</div>
             </div>
           </div>

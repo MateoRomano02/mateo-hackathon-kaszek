@@ -14,7 +14,7 @@ const CuratedLinkSchema = z.object({
 
 const CURATE_TOOL = {
   name: 'curate_links' as const,
-  description: 'Evalua una lista de links y clasifica cada uno como signal o noise segun el perfil del usuario.',
+  description: 'Evaluates a list of links and classifies each one as signal or noise based on the user profile.',
   input_schema: {
     type: 'object' as const,
     properties: {
@@ -25,7 +25,7 @@ const CURATE_TOOL = {
           properties: {
             url: { type: 'string' },
             verdict: { type: 'string', enum: ['signal', 'noise'] },
-            reason: { type: 'string', description: '1 oracion en espanol explicando por que' },
+            reason: { type: 'string', description: '1 sentence in English explaining why' },
             relevance_score: { type: 'number', description: '0-10' },
           },
           required: ['url', 'verdict', 'reason', 'relevance_score'],
@@ -65,10 +65,10 @@ export function CuratorPage() {
           tool_choice: { type: 'tool', name: 'curate_links' },
           messages: [{
             role: 'user',
-            content: `Perfil: ${userProfile.role} / ${userProfile.seniority} / Stack: ${userProfile.stack.join(', ')}
-${userProfile.goals?.length ? `Objetivos: ${userProfile.goals.join(', ')}` : ''}
+            content: `Profile: ${userProfile.role} / ${userProfile.seniority} / Stack: ${userProfile.stack.join(', ')}
+${userProfile.goals?.length ? `Goals: ${userProfile.goals.join(', ')}` : ''}
 
-Evalua estos links. "signal" = relevante para su stack. "noise" = no aporta valor.
+Evaluate these links. "signal" = relevant to their stack. "noise" = adds no value.
 
 ${links.map((l, i) => `${i + 1}. ${l}`).join('\n')}`,
           }],
@@ -77,7 +77,7 @@ ${links.map((l, i) => `${i + 1}. ${l}`).join('\n')}`,
         const toolBlock = response.content.find(
           (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
         )
-        if (!toolBlock) throw new Error('Claude no devolvio resultados')
+        if (!toolBlock) throw new Error('Claude did not return results')
 
         const parsed = CuratedLinkSchema.parse(toolBlock.input)
         setCuratorResults(parsed.links.map((l) => ({
@@ -88,12 +88,12 @@ ${links.map((l, i) => `${i + 1}. ${l}`).join('\n')}`,
         setCuratorResults(links.map((url, i) => ({
           url,
           verdict: i < Math.ceil(links.length * 0.4) ? 'signal' as const : 'noise' as const,
-          reason: i < Math.ceil(links.length * 0.4) ? 'Relevante para tu stack de desarrollo con IA.' : 'No aporta valor directo a tus objetivos actuales.',
+          reason: i < Math.ceil(links.length * 0.4) ? 'Relevant to your AI development stack.' : 'Does not add direct value to your current goals.',
           relevanceScore: i < Math.ceil(links.length * 0.4) ? 7 + Math.random() * 2 : 2 + Math.random() * 3,
         })))
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al curar links')
+      setError(err instanceof Error ? err.message : 'Error curating links')
     } finally {
       setIsProcessing(false)
     }
@@ -105,22 +105,22 @@ ${links.map((l, i) => `${i + 1}. ${l}`).join('\n')}`,
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Curador</h1>
-        <p className="page-subtitle">Pega todos tus links. Claude filtra el ruido y te dice cuales importan.</p>
+        <h1 className="page-title">Curator</h1>
+        <p className="page-subtitle">Paste all your links. Claude filters the noise and tells you which ones matter.</p>
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
-        <div className="card-label">Links (uno por linea)</div>
+        <div className="card-label">Links (one per line)</div>
         <textarea className="input" value={linksInput} onChange={(e) => setLinksInput(e.target.value)}
-          placeholder={'https://articulo-1.com\nhttps://articulo-2.com\nhttps://newsletter.com/edicion'}
+          placeholder={'https://article-1.com\nhttps://article-2.com\nhttps://newsletter.com/edition'}
           rows={5} disabled={isProcessing} style={{ marginBottom: 12 }} />
         <button className="btn btn-primary" onClick={curate} disabled={isProcessing || !linksInput.trim()} style={{ width: '100%' }}>
           {isProcessing ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
               <span className="analyze-spinner" style={{ width: 16, height: 16, margin: 0, borderWidth: 2 }} />
-              Filtrando {linksInput.split('\n').filter((l) => l.trim().length > 5).length} links...
+              Filtering {linksInput.split('\n').filter((l) => l.trim().length > 5).length} links...
             </span>
-          ) : `Curar ${linksInput.split('\n').filter((l) => l.trim().length > 5).length || 0} links`}
+          ) : `Curate ${linksInput.split('\n').filter((l) => l.trim().length > 5).length || 0} links`}
         </button>
       </div>
 
@@ -144,7 +144,7 @@ ${links.map((l, i) => `${i + 1}. ${l}`).join('\n')}`,
                 <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--high)' }}>{r.relevanceScore.toFixed(1)}/10</span>
               </div>
             ))}
-            {signals.length === 0 && <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Ningun link relevante</p>}
+            {signals.length === 0 && <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>No relevant links</p>}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>

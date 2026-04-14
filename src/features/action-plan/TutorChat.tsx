@@ -16,33 +16,33 @@ const getClient = () =>
   })
 
 function buildSystemPrompt(project: GeneratedProject, userProfile: { role: string; seniority: string; stack: string[] }) {
-  return `Eres el Tutor IA de Signal OS. Estas guiando al usuario paso a paso en este proyecto practico.
+  return `You are the AI Tutor of Signal OS. You are guiding the user step by step through this hands-on project.
 
-PROYECTO: ${project.title}
-DESCRIPCION: ${project.description}
+PROJECT: ${project.title}
+DESCRIPTION: ${project.description}
 SKILL TARGET: ${project.skillTarget}
-DIFICULTAD: ${project.difficulty}
-TIEMPO ESTIMADO: ${project.estimatedTime}
+DIFFICULTY: ${project.difficulty}
+ESTIMATED TIME: ${project.estimatedTime}
 
-PASOS DEL PROYECTO:
+PROJECT STEPS:
 ${project.steps.map((s) => `${s.step}. ${s.title}: ${s.description}`).join('\n')}
 
-RECURSOS:
+RESOURCES:
 ${project.resources.map((r) => `- ${r.title}: ${r.url}`).join('\n')}
 
-RESULTADO ESPERADO: ${project.expectedOutcome}
+EXPECTED OUTCOME: ${project.expectedOutcome}
 
-PERFIL DEL USUARIO:
-- Rol: ${userProfile.role}
-- Nivel: ${userProfile.seniority}
+USER PROFILE:
+- Role: ${userProfile.role}
+- Level: ${userProfile.seniority}
 - Stack: ${userProfile.stack.join(', ')}
 
-REGLAS:
-- Responde en espanol, breve y concreto.
-- Si el usuario se trabo en un paso, dale instrucciones especificas para desbloquearse.
-- Si pide ayuda general, guialo al siguiente paso logico.
-- Podes sugerir alternativas si algo no funciona.
-- Maximo 3-4 oraciones por respuesta.`
+RULES:
+- Respond in English, brief and concrete.
+- If the user is stuck on a step, give specific instructions to unblock them.
+- If they ask for general help, guide them to the next logical step.
+- You can suggest alternatives if something isn't working.
+- Maximum 3-4 sentences per response.`
 }
 
 interface TutorChatProps {
@@ -51,7 +51,7 @@ interface TutorChatProps {
 
 export function TutorChat({ project }: TutorChatProps) {
   const [messages, setMessages] = useState<TutorMessage[]>([
-    { id: 'welcome', role: 'assistant', content: `Estoy aca para ayudarte con "${project.title}". Preguntame cualquier cosa sobre los pasos o si te trabas en algo.` },
+    { id: 'welcome', role: 'assistant', content: `I'm here to help you with "${project.title}". Ask me anything about the steps or if you get stuck.` },
   ])
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
@@ -80,7 +80,7 @@ export function TutorChat({ project }: TutorChatProps) {
 
         // Ensure starts with user
         if (apiMessages[0].role === 'assistant') {
-          apiMessages.unshift({ role: 'user', content: '[Inicio del tutor]' })
+          apiMessages.unshift({ role: 'user', content: '[Tutor session start]' })
         }
 
         const stream = client.messages.stream({
@@ -107,11 +107,11 @@ export function TutorChat({ project }: TutorChatProps) {
         await new Promise((r) => setTimeout(r, 800))
         setMessages([...updated, {
           id: crypto.randomUUID(), role: 'assistant',
-          content: 'Buena pregunta! Para ese paso, te recomiendo empezar revisando la documentacion del recurso que te compartimos. Si necesitas mas detalle, contame exactamente donde te trabaste.',
+          content: 'Great question! For that step, I recommend starting by reviewing the resource documentation we shared. If you need more detail, tell me exactly where you got stuck.',
         }])
       }
     } catch {
-      setMessages([...updated, { id: crypto.randomUUID(), role: 'assistant', content: 'Perdon, hubo un error. Intenta de nuevo.' }])
+      setMessages([...updated, { id: crypto.randomUUID(), role: 'assistant', content: 'Sorry, there was an error. Please try again.' }])
     } finally {
       setIsThinking(false)
       setStreamingText('')
@@ -120,7 +120,7 @@ export function TutorChat({ project }: TutorChatProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 300 }}>
-      <div className="card-label">Tutor IA</div>
+      <div className="card-label">AI Tutor</div>
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, maxHeight: 280 }}>
@@ -142,7 +142,7 @@ export function TutorChat({ project }: TutorChatProps) {
         {isThinking && !streamingText && (
           <div style={{ display: 'flex', gap: 4, padding: '8px 12px' }}>
             <span className="analyze-spinner" style={{ width: 12, height: 12, margin: 0, borderWidth: 2 }} />
-            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Pensando...</span>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Thinking...</span>
           </div>
         )}
         <div ref={bottomRef} />
@@ -152,10 +152,10 @@ export function TutorChat({ project }: TutorChatProps) {
       <div style={{ display: 'flex', gap: 6 }}>
         <input className="input" value={input} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Me trabe en el paso 2..." disabled={isThinking}
+          placeholder="I'm stuck on step 2..." disabled={isThinking}
           style={{ flex: 1, fontSize: 12, padding: '8px 12px' }} />
         <button className="btn btn-primary btn-sm" onClick={sendMessage} disabled={!input.trim() || isThinking}>
-          Enviar
+          Send
         </button>
       </div>
     </div>

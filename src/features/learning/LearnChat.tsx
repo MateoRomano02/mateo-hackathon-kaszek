@@ -44,9 +44,9 @@ function parseActions(content: string): { curriculumText: string; actions: Actio
   for (const line of last.split('\n')) {
     const m = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*\s*[—–-]\s*(.+)/)
     if (m) {
-      const diff = m[3].match(/[Dd]ificultad:\s*([\wáéíóú ]+)/i)?.[1]?.trim() ?? ''
-      const time = m[3].match(/[Tt]iempo:\s*([\w\d áéíóú.]+)/i)?.[1]?.trim() ?? ''
-      const desc = m[3].replace(/[Dd]ificultad:\s*[\wáéíóú ]+\.?/i, '').replace(/[Tt]iempo:\s*[\w\d áéíóú.]+\.?/i, '').trim()
+      const diff = m[3].match(/[Dd](?:ificultad|ifficulty):\s*([\wáéíóú ]+)/i)?.[1]?.trim() ?? ''
+      const time = m[3].match(/[Tt](?:iempo|ime):\s*([\w\d áéíóú.]+)/i)?.[1]?.trim() ?? ''
+      const desc = m[3].replace(/[Dd](?:ificultad|ifficulty):\s*[\wáéíóú ]+\.?/i, '').replace(/[Tt](?:iempo|ime):\s*[\w\d áéíóú.]+\.?/i, '').trim()
       actions.push({ id: parseInt(m[1]), title: m[2].trim(), description: desc, difficulty: diff, time })
     }
   }
@@ -54,9 +54,12 @@ function parseActions(content: string): { curriculumText: string; actions: Actio
 }
 
 const DIFF: Record<string, { bg: string; color: string; label: string }> = {
-  facil: { bg: 'rgba(21,128,61,.08)', color: 'var(--high)', label: 'Facil' },
-  medio: { bg: 'rgba(180,83,9,.08)', color: 'var(--mid)', label: 'Medio' },
-  avanzado: { bg: 'rgba(185,28,28,.08)', color: 'var(--noise)', label: 'Avanzado' },
+  easy: { bg: 'rgba(21,128,61,.08)', color: 'var(--high)', label: 'Easy' },
+  medium: { bg: 'rgba(180,83,9,.08)', color: 'var(--mid)', label: 'Medium' },
+  advanced: { bg: 'rgba(185,28,28,.08)', color: 'var(--noise)', label: 'Advanced' },
+  facil: { bg: 'rgba(21,128,61,.08)', color: 'var(--high)', label: 'Easy' },
+  medio: { bg: 'rgba(180,83,9,.08)', color: 'var(--mid)', label: 'Medium' },
+  avanzado: { bg: 'rgba(185,28,28,.08)', color: 'var(--noise)', label: 'Advanced' },
 }
 
 export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChatProps) {
@@ -84,10 +87,10 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <div className="card-label">Recurso</div>
+          <div className="card-label">Resource</div>
           <h2 style={{ fontSize: 20, fontFamily: 'var(--font-serif)', fontWeight: 500 }}>{resourceTitle}</h2>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={onClose}>Volver</button>
+        <button className="btn btn-ghost btn-sm" onClick={onClose}>Back</button>
       </div>
 
       {/* Curriculum */}
@@ -95,7 +98,7 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
         {isTeaching && !curriculum && !streamingText && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 40 }}>
             <span className="analyze-spinner" style={{ width: 28, height: 28, margin: 0 }} />
-            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Claude esta preparando tu leccion...</span>
+            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Claude is preparing your lesson...</span>
           </div>
         )}
         {streamingText && !curriculum && (
@@ -109,9 +112,9 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
       {actions.length > 0 && (
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div className="card-label" style={{ margin: 0 }}>Accionables</div>
+            <div className="card-label" style={{ margin: 0 }}>Action Items</div>
             <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: pct === 100 ? 'var(--high)' : 'var(--text3)' }}>
-              {completedSteps.length}/{actions.length}{pct === 100 ? ' — Completado!' : ''}
+              {completedSteps.length}/{actions.length}{pct === 100 ? ' — Completed!' : ''}
             </span>
           </div>
           <div className="progress-container" style={{ marginBottom: 14 }}>
@@ -149,8 +152,8 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
       {curriculum && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: chatOpen ? 12 : 0 }}>
-            <div className="card-label" style={{ margin: 0 }}>Tutor IA</div>
-            {!chatOpen && <span style={{ fontSize: 11, color: 'var(--text3)' }}>Pregunta lo que quieras sobre este recurso</span>}
+            <div className="card-label" style={{ margin: 0 }}>AI Tutor</div>
+            {!chatOpen && <span style={{ fontSize: 11, color: 'var(--text3)' }}>Ask anything about this resource</span>}
           </div>
           {chatOpen && chatMessages.length > 0 && (
             <div style={{ maxHeight: 250, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
@@ -165,7 +168,7 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
               {isTeaching && !streamingText && curriculum && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 8 }}>
                   <span className="analyze-spinner" style={{ width: 14, height: 14, margin: 0, borderWidth: 2 }} />
-                  <span style={{ fontSize: 11, color: 'var(--text3)' }}>Pensando...</span>
+                  <span style={{ fontSize: 11, color: 'var(--text3)' }}>Thinking...</span>
                 </div>
               )}
               <div ref={chatBottomRef} />
@@ -173,8 +176,8 @@ export function LearnChat({ resourceTitle, resourceContent, onClose }: LearnChat
           )}
           <div style={{ display: 'flex', gap: 8 }}>
             <input className="input" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="No entendi el punto 2... / Como aplico esto?" disabled={isTeaching} style={{ flex: 1 }} />
-            <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={!input.trim() || isTeaching}>Preguntar</button>
+              placeholder="I didn't understand point 2... / How do I apply this?" disabled={isTeaching} style={{ flex: 1 }} />
+            <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={!input.trim() || isTeaching}>Ask</button>
           </div>
         </div>
       )}

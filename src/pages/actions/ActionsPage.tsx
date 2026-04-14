@@ -29,22 +29,22 @@ export function ActionsPage() {
       <div className="page-header">
         <h1 className="page-title">Learning Hub</h1>
         <p className="page-subtitle">
-          Tus recursos analizados, listos para aprender. Clickea cualquiera para que Claude te ensene.
+          Your analyzed resources, ready to learn. Click any to have Claude teach you.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid-3" style={{ marginBottom: 24 }}>
         <div className="card stat-highlight">
-          <div className="card-label">Recursos para aprender</div>
+          <div className="card-label">Resources to learn</div>
           <div className="card-value">{learnedItems.length}</div>
         </div>
         <div className="card">
-          <div className="card-label">Insights disponibles</div>
+          <div className="card-label">Available insights</div>
           <div className="card-value" style={{ color: 'var(--accent)' }}>{totalActionable}</div>
         </div>
         <div className="card">
-          <div className="card-label">Acciones completadas</div>
+          <div className="card-label">Completed actions</div>
           <div className="card-value" style={{ color: 'var(--high)' }}>{completedCount}</div>
         </div>
       </div>
@@ -53,8 +53,8 @@ export function ActionsPage() {
       {learnedItems.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📚</div>
-          <div className="empty-title">Sin recursos para aprender</div>
-          <div className="empty-desc">Analiza contenido en el Signal Feed o usa el Scout Radar para llenar tu biblioteca de aprendizaje.</div>
+          <div className="empty-title">No resources to learn</div>
+          <div className="empty-desc">Analyze content in the Signal Feed or use the Scout Radar to fill your learning library.</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -75,12 +75,12 @@ export function ActionsPage() {
                         <span className="confidence-dots">
                           {[0, 1, 2, 3].map((i) => <span key={i} className={`confidence-dot ${i < 4 ? 'filled' : 'empty'}`} />)}
                         </span>
-                        {highConf} alta confianza
+                        {highConf} high confidence
                       </span>
                     )}
                   </div>
                   <h3 style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
-                    {insights[0]?.title ?? 'Recurso analizado'}
+                    {insights[0]?.title ?? 'Analyzed resource'}
                   </h3>
                   <p style={{ fontSize: 12, color: 'var(--text3)' }}>
                     {insights[0]?.insight?.slice(0, 120) ?? item.rawContent.slice(0, 120)}...
@@ -91,10 +91,10 @@ export function ActionsPage() {
                 </div>
                 <button className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}
                   onClick={() => setLearnTarget({
-                    title: insights[0]?.title ?? 'Recurso',
+                    title: insights[0]?.title ?? 'Resource',
                     content: item.rawContent,
                   })}>
-                  Aprender
+                  Learn
                 </button>
               </div>
             )

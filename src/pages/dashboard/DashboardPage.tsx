@@ -65,12 +65,12 @@ export function DashboardPage() {
       <div className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="page-title">Hola, {userProfile.name}</h1>
+            <h1 className="page-title">Hello, {userProfile.name}</h1>
             <p className="page-subtitle">{userProfile.summary ?? `${userProfile.role} / ${userProfile.seniority}`}</p>
           </div>
           {skillStocks.length === 0 && (
             <button className="btn btn-primary" onClick={runAnalysis} disabled={isLoading}>
-              {isLoading ? 'Analizando...' : 'Analizar mis skills'}
+              {isLoading ? 'Analyzing...' : 'Analyze my skills'}
             </button>
           )}
         </div>
@@ -85,13 +85,13 @@ export function DashboardPage() {
       {/* Trends section — the star of the demo */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div className="card-label" style={{ margin: 0 }}>Tendencias relevantes para tu stack</div>
+          <div className="card-label" style={{ margin: 0 }}>Trending for your stack</div>
           {!loadingTrends && (
             <button className="btn btn-ghost btn-sm" onClick={() => {
               setLoadingTrends(true)
               getTrendingForProfile(userProfile!).then((a) => setTrends(a.slice(0, MAX_TRENDS))).finally(() => setLoadingTrends(false))
             }}>
-              Actualizar
+              Refresh
             </button>
           )}
         </div>
@@ -99,11 +99,11 @@ export function DashboardPage() {
         {loadingTrends ? (
           <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 }}>
             <span className="analyze-spinner" style={{ width: 20, height: 20, margin: 0 }} />
-            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Escaneando HN y Reddit para tu stack...</span>
+            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Scanning HN and Reddit for your stack...</span>
           </div>
         ) : trends.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: 24 }}>
-            <p style={{ fontSize: 13, color: 'var(--text3)' }}>No se encontraron tendencias. Intenta actualizar.</p>
+            <p style={{ fontSize: 13, color: 'var(--text3)' }}>No trends found. Try refreshing.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -135,9 +135,9 @@ export function DashboardPage() {
                   {scrapingUrl === trend.url ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span className="analyze-spinner" style={{ width: 14, height: 14, margin: 0, borderWidth: 2 }} />
-                      Cargando...
+                      Loading...
                     </span>
-                  ) : 'Aprender'}
+                  ) : 'Learn'}
                 </button>
               </div>
             ))}
@@ -149,9 +149,9 @@ export function DashboardPage() {
       {skillStocks.length > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div className="card-label" style={{ margin: 0 }}>Tu portafolio de skills</div>
+            <div className="card-label" style={{ margin: 0 }}>Your skill portfolio</div>
             <button className="btn btn-ghost btn-sm" onClick={runAnalysis} disabled={isLoading}>
-              {isLoading ? 'Analizando...' : 'Re-analizar'}
+              {isLoading ? 'Analyzing...' : 'Re-analyze'}
             </button>
           </div>
 
@@ -170,7 +170,7 @@ export function DashboardPage() {
                 </div>
               ))}
               {risingSkills.length > MAX_SKILLS_PER_STATUS && (
-                <p style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>+{risingSkills.length - MAX_SKILLS_PER_STATUS} mas</p>
+                <p style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>+{risingSkills.length - MAX_SKILLS_PER_STATUS} more</p>
               )}
             </div>
 

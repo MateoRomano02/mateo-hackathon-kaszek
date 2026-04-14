@@ -59,11 +59,11 @@ export function InboxPage() {
       <div className="page-header">
         <h1 className="page-title">Signal Feed</h1>
         <p className="page-subtitle">
-          Tendencias curadas, radar autonomo y analisis manual. Clickea "Aprender" para que Claude te ensene.
+          Curated trends, autonomous radar, and manual analysis. Click "Learn" for Claude to teach you.
         </p>
         {doneCount > 0 && (
           <p style={{ fontSize: 12, color: 'var(--accent)', marginTop: 8 }}>
-            {doneCount} fuente{doneCount > 1 ? 's' : ''} procesada{doneCount > 1 ? 's' : ''} &middot; {totalInsights} insights
+            {doneCount} source{doneCount > 1 ? 's' : ''} processed &middot; {totalInsights} insights
           </p>
         )}
       </div>
@@ -71,7 +71,7 @@ export function InboxPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--surface2)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
         {[
-          { id: 'trends' as Tab, label: 'Tendencias' },
+          { id: 'trends' as Tab, label: 'Trends' },
           { id: 'radar' as Tab, label: 'Scout Radar' },
           { id: 'manual' as Tab, label: 'Manual' },
         ].map((t) => (
@@ -89,20 +89,20 @@ export function InboxPage() {
           {loadingTrends ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 40, justifyContent: 'center' }}>
               <span className="analyze-spinner" style={{ width: 20, height: 20, margin: 0, borderWidth: 2 }} />
-              <span style={{ color: 'var(--text2)' }}>Cargando tendencias de Techmeme...</span>
+              <span style={{ color: 'var(--text2)' }}>Loading Techmeme trends...</span>
             </div>
           ) : trends.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📡</div>
-              <div className="empty-title">No se pudieron cargar tendencias</div>
-              <div className="empty-desc">Intenta con el Radar autonomo o ingresa contenido manualmente.</div>
+              <div className="empty-title">Could not load trends</div>
+              <div className="empty-desc">Try the autonomous Radar or enter content manually.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="card-label">Techmeme — Hoy</span>
+                <span className="card-label">Techmeme — Today</span>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setTrends([]); setLoadingTrends(false) }}>
-                  Actualizar
+                  Refresh
                 </button>
               </div>
               {trends.map((trend, i) => (
@@ -127,9 +127,9 @@ export function InboxPage() {
                     {scrapingId === trend.url ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span className="analyze-spinner" style={{ width: 12, height: 12, margin: 0, borderWidth: 2 }} />
-                        Cargando...
+                        Loading...
                       </span>
-                    ) : 'Aprender'}
+                    ) : 'Learn'}
                   </button>
                 </div>
               ))}
