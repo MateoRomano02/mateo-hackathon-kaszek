@@ -6,35 +6,32 @@ import type { ContentItem, GeneratedProject } from '@/entities/content/types'
 type AiMode = 'mock' | 'anthropic'
 
 interface AppState {
-  // User
   userProfile: UserProfile | null
   setUserProfile: (profile: UserProfile) => void
 
-  // Skills
   skillStocks: SkillStock[]
   setSkillStocks: (stocks: SkillStock[]) => void
   mergeSkillInsight: (skill: string, status: SkillStock['status'], reason: string) => void
 
-  // Content pipeline
   contentItems: ContentItem[]
   addContentItem: (item: ContentItem) => void
   updateContentItem: (id: string, updates: Partial<ContentItem>) => void
 
-  // Projects
   projects: GeneratedProject[]
   addProject: (project: GeneratedProject) => void
 
-  // UI (not persisted)
+  // LMS progress: projectId -> completed step numbers
+  projectProgress: Record<string, number[]>
+  toggleStepComplete: (projectId: string, stepNum: number) => void
+
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
   error: string | null
   setError: (error: string | null) => void
 
-  // AI mode
   aiMode: AiMode
   setAiMode: (mode: AiMode) => void
 
-  // Reset
   resetAll: () => void
 }
 
@@ -58,7 +55,6 @@ export const useAppStore = create<AppState>()(
               ),
             }
           }
-          // New skill discovered from content
           return {
             skillStocks: [
               ...state.skillStocks,
@@ -88,6 +84,16 @@ export const useAppStore = create<AppState>()(
       addProject: (project) =>
         set((state) => ({ projects: [project, ...state.projects] })),
 
+      projectProgress: {},
+      toggleStepComplete: (projectId, stepNum) =>
+        set((state) => {
+          const current = state.projectProgress[projectId] ?? []
+          const updated = current.includes(stepNum)
+            ? current.filter((n) => n !== stepNum)
+            : [...current, stepNum]
+          return { projectProgress: { ...state.projectProgress, [projectId]: updated } }
+        }),
+
       isLoading: false,
       setIsLoading: (loading) => set({ isLoading: loading }),
 
@@ -103,6 +109,7 @@ export const useAppStore = create<AppState>()(
           skillStocks: [],
           contentItems: [],
           projects: [],
+          projectProgress: {},
           isLoading: false,
           error: null,
           aiMode: 'anthropic',
@@ -115,6 +122,7 @@ export const useAppStore = create<AppState>()(
         skillStocks: state.skillStocks,
         contentItems: state.contentItems.filter((c) => c.status === 'done'),
         projects: state.projects,
+        projectProgress: state.projectProgress,
         aiMode: state.aiMode,
       }),
     },

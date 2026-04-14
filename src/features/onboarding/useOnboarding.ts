@@ -34,7 +34,7 @@ export function useOnboarding() {
       const stocks = await mockAnalysisService.analyzeSkillPortfolio(profile)
       setSkillStocks(stocks)
 
-      navigate('/dashboard')
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error en onboarding')
     } finally {

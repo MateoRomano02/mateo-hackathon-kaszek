@@ -88,7 +88,7 @@ export function useOnboardingChat() {
             // Non-blocking: dashboard can still re-analyze
           }
 
-          setTimeout(() => navigate('/dashboard'), 2200)
+          setTimeout(() => navigate('/dashboard', { replace: true }), 2200)
         }
       } catch (err) {
         const errorMsg: ChatMessage = {

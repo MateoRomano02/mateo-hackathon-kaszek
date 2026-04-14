@@ -1,18 +1,20 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { OnboardingPage } from '@/pages/onboarding/OnboardingPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
-import { InboxPage } from '@/pages/inbox/InboxPage'
-import { ActionsPage } from '@/pages/actions/ActionsPage'
-import { AppLayout } from '@/app/layouts/AppLayout'
+import { FeedPage } from '@/pages/feed/FeedPage'
+import { CoursesPage } from '@/pages/courses/CoursesPage'
+import { AppShell } from '@/app/layouts/AppShell'
+import { ROUTES } from '@/shared/constants/routes'
 
 export const router = createBrowserRouter([
-  { path: '/', element: <OnboardingPage /> },
+  { path: '/', element: <Navigate to={ROUTES.ONBOARDING} replace /> },
+  { path: ROUTES.ONBOARDING, element: <OnboardingPage /> },
   {
-    element: <AppLayout />,
+    element: <AppShell />,
     children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/inbox', element: <InboxPage /> },
-      { path: '/actions', element: <ActionsPage /> },
+      { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
+      { path: ROUTES.FEED, element: <FeedPage /> },
+      { path: ROUTES.COURSES, element: <CoursesPage /> },
     ],
   },
 ])
