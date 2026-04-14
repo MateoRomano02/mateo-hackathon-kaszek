@@ -43,4 +43,4 @@ El Copiloto orquesta el descubrimiento:
    ```
 
 ---
-*Diseñado por Equipo: Lucas, Mateo, Dante, Maru para el Kaszekathon 2025.*
+*Diseñado por Equipo: Lucas, Mateo, Dante, Maru para el Kaszekathon 2026.*
