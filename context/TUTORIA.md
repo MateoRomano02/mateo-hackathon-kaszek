@@ -24,10 +24,11 @@
 ```bash
 # Al llegar, pedir/confirmar API key y Console ID
 # Editá el .env:
-ANTHROPIC_API_KEY=sk-ant-TU-KEY-AQUI
+VITE_ANTHROPIC_API_KEY=sk-ant-TU-KEY-AQUI
 
-# Verificar que funciona:
-python -c "from src.api.claude_client import chat; print(chat('Say OK'))"
+# Verificar que el framework de React arranca:
+npm run dev
+# Y abrir el localhost en el navegador.
 ```
 
 ### Prioridad 2: Escuchar el demo de Brad Abrams
@@ -61,7 +62,8 @@ claude
 
 ### Minuto 75-90: Primer smoke test
 ```bash
-python -c "from src.agents.mi_agente import MiAgente; a = MiAgente(); print(a.run('test'))"
+# Revisá que la llamada a la IA fluya hacia el estado en Zustand y 
+# se muestre algo en la interfaz de React. No busques perfección de diseño todavía.
 ```
 
 ### 🚦 Checkpoint 12:00
@@ -75,13 +77,13 @@ python -c "from src.agents.mi_agente import MiAgente; a = MiAgente(); print(a.ru
 
 ### Objetivo: demo visual funcionando
 
-### Minuto 0-30: Conectar Streamlit
+### Minuto 0-30: Conectar Pantallas y Zustand
 ```bash
 # Pedile a Claude Code:
-"Actualiza ui.py para que use [mi agente/función principal]
-con un input de [tipo] y muestre [tipo de output]"
+"Genera los componentes UI con Tailwind y conéctalos a la llamada del SDK en Zustand
+con un input de [tipo] y muestra [tipo de output]"
 
-streamlit run ui.py  # verificar que arranca
+npm run dev  # verificar en http://localhost:5173/
 ```
 
 ### Minuto 30-60: Flujo completo de punta a punta
@@ -123,12 +125,13 @@ El cerebro necesita el break. No saltés el almuerzo.
    - Buscar datos reales de tu dominio
    - Armar 3-5 casos de ejemplo convincentes
 
-3. **Manejo de errores** — que no crashee en el demo
-   ```python
-   try:
-       result = agent.run(user_input)
-   except Exception as e:
-       result = f"Error procesando: mostrá un mensaje amigable"
+3. **Manejo de errores** — spinners y tostadas (toasts)
+   ```typescript
+   try {
+       const result = await anthropic.messages.create({...});
+   } catch (e) {
+       // Mostrar error amigable en un Toast de Shadcn
+   }
    ```
 
 4. **UI más clara** — título, subtítulo, instrucciones en 2 líneas
@@ -209,9 +212,9 @@ git push origin main
 
 ### "Claude Code está roto / la API no responde"
 ```bash
-# Verificar API key:
-python -c "import anthropic; c = anthropic.Anthropic(); print('OK')"
-
+# Verificar npm:
+npm run dev
+# Revisar consola del browser por errores de CORS/Network
 # Si falla: reiniciar Claude Code
 # Si persiste: ir a console.anthropic.com para verificar créditos
 ```
