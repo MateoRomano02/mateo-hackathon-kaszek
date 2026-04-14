@@ -4,7 +4,7 @@ import { ContentItem } from '@/entities/content/types'
 import { AnalysisResult } from '@/entities/analysis/types'
 import { aiService } from '@/services/ai'
 import { StorageService } from '@/services/storage/StorageService'
-import { MOCK_CONTENT } from '@/services/mock/mockData'
+import { TechmemeIngestionService } from '@/services/ingestion/TechmemeIngestionService'
 import { getErrorMessage } from '@/shared/utils/errors'
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -18,17 +18,21 @@ interface AppState {
   analyzeProgress: number
   analysisError: string | null
   completedActions: string[]
+  isLoadingFeed: boolean
+  feedError: string | null
 }
 
 const initialState: AppState = {
   user: null,
-  content: MOCK_CONTENT,
+  content: [],
   analysis: null,
   isAnalyzing: false,
   analyzeStep: '',
   analyzeProgress: 0,
   analysisError: null,
   completedActions: [],
+  isLoadingFeed: false,
+  feedError: null,
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
@@ -44,6 +48,8 @@ type AppAction =
   | { type: 'STOP_ANALYZING' }
   | { type: 'SET_ANALYSIS_ERROR'; payload: string | null }
   | { type: 'SET_COMPLETED_ACTIONS'; payload: string[] }
+  | { type: 'SET_LOADING_FEED'; payload: boolean }
+  | { type: 'SET_FEED_ERROR'; payload: string | null }
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -67,6 +73,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, analysisError: action.payload }
     case 'SET_COMPLETED_ACTIONS':
       return { ...state, completedActions: action.payload }
+    case 'SET_LOADING_FEED':
+      return { ...state, isLoadingFeed: action.payload }
+    case 'SET_FEED_ERROR':
+      return { ...state, feedError: action.payload }
     default:
       return state
   }
@@ -82,6 +92,8 @@ interface AppContextValue extends AppState {
   loadDemoData: (profile: UserProfile, content: ContentItem[], analysis: AnalysisResult) => void
   toggleActionDone: (id: string) => void
   dismissError: () => void
+  loadFromFeed: () => Promise<void>
+  dismissFeedError: () => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -147,9 +159,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ANALYSIS_ERROR', payload: null })
   }
 
+  const loadFromFeed = async () => {
+    if (state.isLoadingFeed) return
+    dispatch({ type: 'SET_LOADING_FEED', payload: true })
+    dispatch({ type: 'SET_FEED_ERROR', payload: null })
+    try {
+      const items = await TechmemeIngestionService.fetchLatest(15)
+      dispatch({ type: 'SET_CONTENT', payload: items })
+    } catch (error) {
+      const { message } = getErrorMessage(error)
+      dispatch({ type: 'SET_FEED_ERROR', payload: message })
+    } finally {
+      dispatch({ type: 'SET_LOADING_FEED', payload: false })
+    }
+  }
+
+  const dismissFeedError = () => {
+    dispatch({ type: 'SET_FEED_ERROR', payload: null })
+  }
+
   return (
     <AppContext.Provider
-      value={{ ...state, completeOnboarding, addContent, deleteContent, startAnalysis, loadDemoData, toggleActionDone, dismissError }}
+      value={{ ...state, completeOnboarding, addContent, deleteContent, startAnalysis, loadDemoData, toggleActionDone, dismissError, loadFromFeed, dismissFeedError }}
     >
       {children}
     </AppContext.Provider>

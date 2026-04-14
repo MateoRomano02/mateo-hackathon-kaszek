@@ -298,6 +298,11 @@ textarea.input { resize: vertical; min-height: 80px; line-height: 1.6; }
 .trending-also-quote { font-size: 11px; color: var(--text2); font-style: italic; line-height: 1.5; margin-top: 1px; }
 .trending-inference { font-size: 10px; color: var(--mid); background: rgba(180,83,9,.07); border: 1px solid rgba(180,83,9,.18); border-radius: 5px; padding: 4px 8px; margin-top: 8px; display: inline-flex; gap: 4px; }
 
+/* ─── FEED ERROR BANNER ──────────────────────────────────────────────────── */
+.feed-error-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(185,28,28,.08); border: 1px solid rgba(185,28,28,.25); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: var(--noise); }
+.feed-error-dismiss { background: none; border: none; cursor: pointer; color: var(--noise); font-size: 14px; line-height: 1; padding: 0 4px; opacity: .7; }
+.feed-error-dismiss:hover { opacity: 1; }
+
 /* ─── CONFIDENCE BADGE ───────────────────────────────────────────────────── */
 .confidence-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
 .confidence-high      { background: rgba(21,128,61,.12);   color: var(--high);   border: 1px solid rgba(21,128,61,.3); }
