@@ -2,6 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { AIAnalysisService } from './AIAnalysisService'
 import type { OnboardingData, UserProfile, SkillStock, OnboardingChatResult } from '@/entities/user/types'
 import type { SourceMetadata, CanonicalInsight, GeneratedProject } from '@/entities/content/types'
+// Tool definitions use `as const` → readonly arrays. New SDK requires mutable string[].
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const asTool = (t: unknown): Anthropic.Tool => t as any
+
 import {
   ANALYZE_PORTFOLIO_TOOL,
   AnalyzePortfolioOutputSchema,
@@ -54,7 +58,7 @@ export const anthropicAnalysisService: AIAnalysisService = {
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 2048,
-        tools: [ANALYZE_PORTFOLIO_TOOL],
+        tools: [asTool(ANALYZE_PORTFOLIO_TOOL)],
         tool_choice: { type: 'tool', name: 'analyze_skill_portfolio' },
         messages: [{
           role: 'user',
@@ -98,7 +102,7 @@ Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: ONBOARDING_SYSTEM_PROMPT,
-        tools: [BUILD_USER_PROFILE_TOOL],
+        tools: [asTool(BUILD_USER_PROFILE_TOOL)],
         messages: apiMessages,
       })
       stream.on('text', (text) => onStream(text))
@@ -133,7 +137,7 @@ Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        tools: [EVALUATE_SOURCE_TOOL],
+        tools: [asTool(EVALUATE_SOURCE_TOOL)],
         tool_choice: { type: 'tool', name: 'evaluate_source' },
         messages: [{
           role: 'user',
@@ -191,7 +195,7 @@ Responde en espanol.`,
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        tools: [EXTRACT_CANONICAL_INSIGHTS_TOOL],
+        tools: [asTool(EXTRACT_CANONICAL_INSIGHTS_TOOL)],
         tool_choice: { type: 'tool', name: 'extract_canonical_insights' },
         messages: [{
           role: 'user',
@@ -256,7 +260,7 @@ ${content.slice(0, 3500)}
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 2048,
-        tools: [GENERATE_PROJECT_TOOL],
+        tools: [asTool(GENERATE_PROJECT_TOOL)],
         tool_choice: { type: 'tool', name: 'generate_project' },
         messages: [{
           role: 'user',
