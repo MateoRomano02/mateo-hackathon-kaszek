@@ -1,88 +1,156 @@
-import { useDashboard } from '@/features/dashboard/useDashboard'
-import { SkillStocksGrid } from '@/features/dashboard/SkillStocksGrid'
-import { Button } from '@/shared/ui'
+import { useAppStore } from '@/app/providers/store'
+import { useNavigate } from 'react-router-dom'
+import { mockAnalysisService } from '@/services/mock/MockAnalysisService'
+import { anthropicAnalysisService } from '@/services/ai/AnthropicAnalysisServiceAdapter'
+import { SKILL_STATUS_CONFIG } from '@/shared/constants'
+import type { SkillStatus } from '@/shared/constants'
+import { ROUTES } from '@/shared/constants/routes'
 
 export function DashboardPage() {
-  const {
-    userProfile,
-    skillStocks,
-    stocksByStatus,
-    isLoading,
-    error,
-    runAiAnalysis,
-  } = useDashboard()
+  const { userProfile, skillStocks, setSkillStocks, contentItems, isLoading, setIsLoading, error, setError, aiMode } = useAppStore()
+  const navigate = useNavigate()
 
   if (!userProfile) return null
 
+  const service = aiMode === 'anthropic' ? anthropicAnalysisService : mockAnalysisService
+  const doneContent = contentItems.filter((c) => c.status === 'done').length
+  const totalInsights = contentItems.reduce((a, c) => a + (c.canonicalInsights?.length ?? 0), 0)
+  const risingSkills = skillStocks.filter((s) => s.status === 'rising')
+  const degradingSkills = skillStocks.filter((s) => s.status === 'degrading')
+
+  const runAnalysis = async () => {
+    setIsLoading(true); setError(null)
+    try { setSkillStocks(await service.analyzeSkillPortfolio(userProfile)) }
+    catch (err) { setError(err instanceof Error ? err.message : 'Error') }
+    finally { setIsLoading(false) }
+  }
+
+  const byStatus = (s: SkillStatus) => skillStocks.filter((sk) => sk.status === s).sort((a, b) => b.priorityScore - a.priorityScore)
+
   return (
-    <div className="space-y-8">
-      {/* Profile summary */}
-      {userProfile.summary && (
-        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm text-zinc-300">{userProfile.summary}</p>
-            <div className="flex flex-wrap gap-2">
-              {userProfile.stack.map((tool) => (
-                <span key={tool} className="text-[11px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
-                  {tool}
-                </span>
-              ))}
-            </div>
-            {userProfile.goals && userProfile.goals.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {userProfile.goals.map((goal) => (
-                  <span key={goal} className="text-[11px] bg-indigo-600/10 text-indigo-400 px-2 py-0.5 rounded">
-                    {goal}
-                  </span>
-                ))}
-              </div>
-            )}
+    <>
+      {/* Header */}
+      <div className="page-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 className="page-title">Hola, {userProfile.name}</h1>
+            <p className="page-subtitle">{userProfile.summary ?? `${userProfile.role} / ${userProfile.seniority}`}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" onClick={runAnalysis} disabled={isLoading}>
+              {isLoading ? 'Analizando...' : 'Analizar skills'}
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate(ROUTES.FEED)}>
+              Ver Feed
+            </button>
           </div>
         </div>
-      )}
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-zinc-100">Tu Portafolio de Skills</h2>
-          <p className="text-sm text-zinc-500 mt-1">
-            {skillStocks.length} skills analizados &middot;{' '}
-            {userProfile.stack.length} herramientas en tu stack
-          </p>
-        </div>
-
-        <Button
-          onClick={runAiAnalysis}
-          disabled={isLoading}
-          className="cursor-pointer"
-        >
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Analizando...
-            </span>
-          ) : (
-            'Re-analizar skills'
-          )}
-        </Button>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">
-          {error}
+        <div className="card" style={{ borderColor: 'rgba(185,28,28,.3)', background: 'rgba(185,28,28,.05)', marginBottom: 20 }}>
+          <p style={{ color: 'var(--noise)', fontSize: 13 }}>{error}</p>
         </div>
       )}
 
+      {/* Stats */}
+      <div className="grid-4" style={{ marginBottom: 28 }}>
+        <div className="card stat-highlight">
+          <div className="card-label">Skills</div>
+          <div className="card-value">{skillStocks.length}</div>
+          <div className="card-sub">{userProfile.stack.length} en tu stack</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Contenidos</div>
+          <div className="card-value">{doneContent}</div>
+          <div className="card-sub">{totalInsights} insights</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Rising</div>
+          <div className="card-value" style={{ color: 'var(--accent)' }}>{risingSkills.length}</div>
+          <div className="card-sub">Invertir ahora</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Degrading</div>
+          <div className="card-value" style={{ color: 'var(--mid)' }}>{degradingSkills.length}</div>
+          <div className="card-sub">Dejar de invertir</div>
+        </div>
+      </div>
+
+      {/* Skills */}
       {skillStocks.length === 0 ? (
-        <div className="text-center py-16 space-y-3">
-          <p className="text-zinc-400">Tu portafolio de skills esta vacio.</p>
-          <Button onClick={runAiAnalysis} disabled={isLoading} className="cursor-pointer">
-            Generar analisis con Claude
-          </Button>
+        <div className="empty-state">
+          <div className="empty-icon">📊</div>
+          <div className="empty-title">Sin skills analizados</div>
+          <div className="empty-desc">Clickea "Analizar skills" para que Claude evalue tu portafolio.</div>
         </div>
       ) : (
-        <SkillStocksGrid stocksByStatus={stocksByStatus} />
+        <>
+          {/* Skill columns */}
+          <div className="grid-4" style={{ marginBottom: 28 }}>
+            {(['rising', 'stable', 'degrading', 'gone'] as SkillStatus[]).map((status) => {
+              const cfg = SKILL_STATUS_CONFIG[status]
+              const skills = byStatus(status)
+              return (
+                <div key={status}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span>{cfg.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-mono)' }}>{cfg.label}</span>
+                    <span className="tag">{skills.length}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {skills.map((sk) => (
+                      <div key={sk.id} className="card-sm">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500 }}>{sk.skill}</span>
+                          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text3)' }}>{sk.priorityScore.toFixed(1)}</span>
+                        </div>
+                        <p style={{ fontSize: 11, color: 'var(--text2)' }}>{sk.rationale}</p>
+                      </div>
+                    ))}
+                    {skills.length === 0 && <p style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>—</p>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Learning progress */}
+          {(risingSkills.length > 0 || degradingSkills.length > 0) && (
+            <div className="card">
+              <div className="card-label">Tu ruta de aprendizaje</div>
+              {risingSkills.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent)', marginBottom: 8 }}>Enfocate en estos:</p>
+                  {risingSkills.slice(0, 3).map((s) => (
+                    <div key={s.id} className="memory-item">
+                      <span className="memory-dot dot-learned" />
+                      <div>
+                        <span style={{ fontWeight: 500, fontSize: 13 }}>{s.skill}</span>
+                        <span style={{ color: 'var(--text3)', fontSize: 12 }}> — {s.suggestedAction}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {degradingSkills.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--mid)', marginBottom: 8 }}>Deja de invertir en:</p>
+                  {degradingSkills.map((s) => (
+                    <div key={s.id} className="memory-item">
+                      <span className="memory-dot dot-pending" />
+                      <div>
+                        <span style={{ fontWeight: 500, fontSize: 13 }}>{s.skill}</span>
+                        <span style={{ color: 'var(--text3)', fontSize: 12 }}> — {s.rationale}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </>
   )
 }

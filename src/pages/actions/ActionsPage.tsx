@@ -1,70 +1,106 @@
-import { useActionPlan } from '@/features/action-plan/useActionPlan'
-import { ProjectCard } from '@/features/action-plan/ProjectCard'
+import { useState } from 'react'
 import { useAppStore } from '@/app/providers/store'
-import { Button } from '@/shared/ui'
-import { cn } from '@/lib/utils'
+import { LearnChat } from '@/features/learning/LearnChat'
 
 export function ActionsPage() {
-  const { projects, isGenerating, activeSkill, generateProject } = useActionPlan()
-  const skillStocks = useAppStore((s) => s.skillStocks)
+  const { contentItems, projectProgress } = useAppStore()
+  const [learnTarget, setLearnTarget] = useState<{ title: string; content: string } | null>(null)
 
-  const risingSkills = skillStocks.filter((s) => s.status === 'rising')
+  // Get all done content with their insights
+  const learnedItems = contentItems.filter((c) => c.status === 'done' && (c.canonicalInsights?.length ?? 0) > 0)
+
+  // Count action items across all insights
+  const allInsights = learnedItems.flatMap((c) => c.canonicalInsights ?? [])
+  const totalActionable = allInsights.length
+  const completedCount = Object.values(projectProgress).flat().length
+
+  if (learnTarget) {
+    return (
+      <LearnChat
+        resourceTitle={learnTarget.title}
+        resourceContent={learnTarget.content}
+        onClose={() => setLearnTarget(null)}
+      />
+    )
+  }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-zinc-100">Proyectos Pre-Armados</h2>
-        <p className="text-sm text-zinc-500 mt-1">
-          Claude genera mini-proyectos practicos para tus skills Rising. Accionables y con deadline.
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Learning Hub</h1>
+        <p className="page-subtitle">
+          Tus recursos analizados, listos para aprender. Clickea cualquiera para que Claude te ensene.
         </p>
       </div>
 
-      {/* Quick generate from Rising skills */}
-      {risingSkills.length > 0 && (
-        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6 space-y-4">
-          <h3 className="text-sm font-medium text-zinc-300">Generar proyecto para un skill Rising</h3>
-          <div className="flex flex-wrap gap-2">
-            {risingSkills.map((skill) => (
-              <Button
-                key={skill.id}
-                variant="outline"
-                size="sm"
-                disabled={isGenerating}
-                onClick={() => generateProject(skill.skill)}
-                className={cn(
-                  'cursor-pointer',
-                  activeSkill === skill.skill && 'animate-pulse',
-                )}
-              >
-                {activeSkill === skill.skill ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-3 w-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
-                    Generando...
-                  </span>
-                ) : (
-                  skill.skill
-                )}
-              </Button>
-            ))}
-          </div>
+      {/* Stats */}
+      <div className="grid-3" style={{ marginBottom: 24 }}>
+        <div className="card stat-highlight">
+          <div className="card-label">Recursos para aprender</div>
+          <div className="card-value">{learnedItems.length}</div>
         </div>
-      )}
+        <div className="card">
+          <div className="card-label">Insights disponibles</div>
+          <div className="card-value" style={{ color: 'var(--accent)' }}>{totalActionable}</div>
+        </div>
+        <div className="card">
+          <div className="card-label">Acciones completadas</div>
+          <div className="card-value" style={{ color: 'var(--high)' }}>{completedCount}</div>
+        </div>
+      </div>
 
-      {/* Projects list */}
-      {projects.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-zinc-500 text-sm">Todavia no generaste ningun proyecto.</p>
-          <p className="text-zinc-600 text-xs mt-1">
-            Selecciona un skill Rising arriba para que Claude te arme un proyecto practico.
-          </p>
+      {/* Learning items */}
+      {learnedItems.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📚</div>
+          <div className="empty-title">Sin recursos para aprender</div>
+          <div className="empty-desc">Analiza contenido en el Signal Feed o usa el Scout Radar para llenar tu biblioteca de aprendizaje.</div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {learnedItems.map((item) => {
+            const insights = item.canonicalInsights ?? []
+            const highConf = insights.filter((i) => i.confidenceLevel === 'high').length
+
+            return (
+              <div key={item.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    {item.sourceMetadata && (
+                      <span className="tag">{item.sourceMetadata.domainAuthority.replace('_', ' ')}</span>
+                    )}
+                    <span className="badge badge-high">{insights.length} insights</span>
+                    {highConf > 0 && (
+                      <span className="confidence-badge confidence-high">
+                        <span className="confidence-dots">
+                          {[0, 1, 2, 3].map((i) => <span key={i} className={`confidence-dot ${i < 4 ? 'filled' : 'empty'}`} />)}
+                        </span>
+                        {highConf} alta confianza
+                      </span>
+                    )}
+                  </div>
+                  <h3 style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
+                    {insights[0]?.title ?? 'Recurso analizado'}
+                  </h3>
+                  <p style={{ fontSize: 12, color: 'var(--text3)' }}>
+                    {insights[0]?.insight?.slice(0, 120) ?? item.rawContent.slice(0, 120)}...
+                  </p>
+                  {item.originalUrl && (
+                    <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>{item.originalUrl}</p>
+                  )}
+                </div>
+                <button className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}
+                  onClick={() => setLearnTarget({
+                    title: insights[0]?.title ?? 'Recurso',
+                    content: item.rawContent,
+                  })}>
+                  Aprender
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
-    </div>
+    </>
   )
 }
