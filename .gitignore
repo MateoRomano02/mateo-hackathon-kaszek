@@ -13,3 +13,5 @@ node_modules/
 .vscode/
 *.log
 data/*.json
+dist/
+tsconfig.tsbuildinfo
