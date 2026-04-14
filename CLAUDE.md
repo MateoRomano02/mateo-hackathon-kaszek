@@ -9,49 +9,47 @@ Hackathon presencial, 14 Abril 2026, Buenos Aires. **Equipo: 1 persona. Coding t
 ## Track
 > [COMPLETAR: Ecommerce / Fintech / Educación / Open]
 
-## Stack
-- Python 3.11+, anthropic SDK
+## Stack (Modern Frontend)
+- Frontend: React 19 + TypeScript + Vite (`npm run dev`)
+- Estado/Agentes: Zustand
+- Validación y Schemas: Zod
+- Interacción con Claude: `@anthropic-ai/sdk` (Cliente directo / Frontend-only para hackathon)
+- UI/CSS: Tailwind CSS v4 + Shadcn/ui
 - Modelo: claude-sonnet-4-6 (SIEMPRE, salvo que yo diga opus)
-- UI: Streamlit → streamlit run ui.py
-- API: FastAPI → uvicorn api_server:app --reload
-- Persistencia: SQLite o JSON local
 
 ## Estructura de archivos
 ```
 ├── CLAUDE.md                      ← cerebro (este archivo)
-├── context/IDEA.md                ← idea + usuario + pain point (COMPLETAR)
+├── context/IDEA.md                ← idea + usuario + pain point (INYECCIÓN PRINCIPAL)
 ├── context/FOUNDER_THINKING.md    ← validación de negocio
-├── context/ARCHITECTURE.md        ← decisiones técnicas
+├── context/ARCHITECTURE.md        ← decisiones técnicas frontend
 ├── context/TUTORIA.md             ← guía hora a hora del día
 ├── docs/HACKATHON_CONTEXT.md      ← info del evento
-├── src/api/claude_client.py       ← wrapper Claude (LISTO)
-├── src/agents/base_agent.py       ← agente con tool use (LISTO)
-├── src/tools/tool_definitions.py  ← schemas de tools (LISTO)
-├── prompts/system_prompts.py      ← prompts del sistema
-├── ui.py                          ← Streamlit UI
-└── api_server.py                  ← FastAPI backend
+├── src/components/ui/             ← componentes shadcn instalados
+├── src/store/                     ← manejo de estado con Zustand
+├── src/lib/utils.ts               ← utilidades
+├── src/App.tsx                    ← Entrypoint de la App
 ```
 
 ## Reglas de código
-1. Todas las llamadas Claude van por src/api/claude_client.py
-2. Nunca hardcodear API keys - usar os.environ.get("ANTHROPIC_API_KEY")
-3. Modelo siempre claude-sonnet-4-6 salvo indicación explícita de opus
-4. System prompts en prompts/system_prompts.py, no inline
-5. Siempre try/except en llamadas a la API
-6. Streamlit como UI principal para el demo
+1. Todo Tool Use de Anthropic debe estar validado con esquemas de `zod`.
+2. Componentes UI se instalan por CLI de shadcn (`npx shadcn@latest add ...`).
+3. Nunca hardcodear API keys - usar variables de entorno `import.meta.env.VITE_ANTHROPIC_API_KEY`.
+4. Modelo siempre claude-sonnet-4-6 salvo indicación explícita de opus.
+5. Utilizar Zustand para sincronizar el estado reactivo entre Claude y la UI.
+6. CSS con Tailwind v4 native (sin config.js pesado).
 
 ## Prioridades (orden estricto)
-1. Happy path funcionando end-to-end
-2. Tool use visible (los jueces lo valoran MUCHO)
+1. Happy path funcionando end-to-end (UI -> Llamada a Sonnet -> Respuesta en UI)
+2. Tool Use visible (los jueces lo valoran MUCHO). Schema con Zod.
 3. Datos de ejemplo reales (no texto "test")
-4. UI clara y funcional
+4. UI clara y llamativa (Tailwind/Shadcn ayuda rápido)
 5. Manejo de errores
-6. Features adicionales (solo si sobra tiempo)
 
-## Comandos disponibles
-- /plan      → auditar y planificar sin escribir código
-- /ship      → limpiar + commit + verificar para entrega
-- /demo-ready → verificar que el demo funciona en 10 min
+## Comandos disponibles de Scaffolding
+- /plan      → auditar y planificar basándose en `IDEA.md`
+- /ship      → formatear + commit + build (`npm run build`)
+- /demo-ready → verificar que el demo corre con `npm run dev` sin errores.
 
 ## Deadline
 17:00 → repo + descripción + video 2 min. No hay extensiones.
