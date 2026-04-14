@@ -1,6 +1,35 @@
 import { UserProfile } from '@/entities/user/types'
 import { ContentItem } from '@/entities/content/types'
 import { AnalysisResult } from '@/entities/analysis/types'
+import { SourceQualityScore } from '@/entities/source/types'
+
+// ─── Source quality presets ───────────────────────────────────────────────────
+// These are evaluated once and reused across content items and evidence refs.
+
+const SQ_GARTNER: SourceQualityScore = {
+  authority: 96, freshness: 80, specificity: 92, evidenceStrength: 97, primaryProximity: 95,
+  overall: 92, tier: 'primary', flags: ['data-backed', 'primary-research'],
+}
+
+const SQ_ARIYH: SourceQualityScore = {
+  authority: 90, freshness: 86, specificity: 88, evidenceStrength: 92, primaryProximity: 85,
+  overall: 88, tier: 'primary', flags: ['data-backed', 'primary-research'],
+}
+
+const SQ_LINKEDIN_CASE: SourceQualityScore = {
+  authority: 70, freshness: 80, specificity: 78, evidenceStrength: 72, primaryProximity: 60,
+  overall: 72, tier: 'secondary', flags: ['data-backed'],
+}
+
+const SQ_LINKEDIN_LIST: SourceQualityScore = {
+  authority: 60, freshness: 82, specificity: 50, evidenceStrength: 38, primaryProximity: 40,
+  overall: 55, tier: 'secondary', flags: ['opinion-only', 'hype'],
+}
+
+const SQ_MEDIUM: SourceQualityScore = {
+  authority: 42, freshness: 78, specificity: 55, evidenceStrength: 45, primaryProximity: 30,
+  overall: 50, tier: 'community', flags: ['unverified'],
+}
 
 export const MOCK_USER: UserProfile = {
   id: 'u1',
@@ -40,6 +69,7 @@ export const MOCK_CONTENT: ContentItem[] = [
         { criterion: 'Accionable con equipo pequeño',        passed: true,  reason: 'Solo requiere editar la página de precios' },
         { criterion: 'Canales orgánicos o bajo presupuesto', passed: true,  reason: 'No requiere presupuesto adicional' },
       ],
+      sourceQuality: SQ_ARIYH,
     },
   },
   {
@@ -58,6 +88,7 @@ export const MOCK_CONTENT: ContentItem[] = [
         { criterion: 'Accionable con equipo pequeño',        passed: true,  reason: 'Segmentación por intención es ejecutable con equipo chico' },
         { criterion: 'Canales orgánicos o bajo presupuesto', passed: true,  reason: 'Estrategia de email orgánico sin paid' },
       ],
+      sourceQuality: SQ_LINKEDIN_CASE,
     },
   },
   {
@@ -76,6 +107,7 @@ export const MOCK_CONTENT: ContentItem[] = [
         { criterion: 'Accionable con equipo pequeño',        passed: true,  reason: 'Herramientas SaaS accesibles con plan gratuito o bajo costo' },
         { criterion: 'Canales orgánicos o bajo presupuesto', passed: true,  reason: 'Varias tienen tier gratuito o muy económico' },
       ],
+      sourceQuality: SQ_LINKEDIN_LIST,
     },
   },
   {
@@ -94,6 +126,7 @@ export const MOCK_CONTENT: ContentItem[] = [
         { criterion: 'Accionable con equipo pequeño',        passed: false, reason: 'No hay acción aplicable a tu contexto' },
         { criterion: 'Canales orgánicos o bajo presupuesto', passed: false, reason: 'No aplica al contexto de marketing SaaS' },
       ],
+      sourceQuality: SQ_MEDIUM,
     },
   },
   {
@@ -112,6 +145,7 @@ export const MOCK_CONTENT: ContentItem[] = [
         { criterion: 'Accionable con equipo pequeño',        passed: true,  reason: 'Crear self-serve content no requiere equipo grande' },
         { criterion: 'Canales orgánicos o bajo presupuesto', passed: true,  reason: 'Contenido orgánico como palanca principal' },
       ],
+      sourceQuality: SQ_GARTNER,
     },
   },
 ]
@@ -133,18 +167,44 @@ export const MOCK_ANALYSIS: AnalysisResult = {
       title: 'El self-serve content es tu mayor palanca de conversión B2B',
       summary: 'El 67% de tus compradores investigan solos antes de hablar con ventas. Tu contenido mid-funnel necesita ser más denso en valor.',
       why: 'Con equipo chico, el contenido que convierte sin intervención humana es tu mayor multiplicador.',
+      confidence: 'high' as const,
+      confidenceScore: 90,
+      confidenceExplanation: 'Dato primario Gartner (fuente primaria, 96 autoridad) corroborado por caso real HubSpot con métricas concretas. Dos fuentes independientes coinciden.',
+      evidence: [
+        { contentId: 'c5', quote: '67% compradores B2B investigan solos antes de hablar con ventas', isExplicit: true, weight: 'primary' as const },
+        { contentId: 'c2', quote: 'Content upgrades + segmentación por intención = crecimiento acelerado', isExplicit: false, weight: 'supporting' as const },
+      ],
+      sourceCount: 2,
+      isConsolidated: true,
     },
     {
       id: 'i2', priority: 'high', topicIds: ['t2'],
       title: 'Price anchoring en tus landing pages puede mover la aguja rápido',
       summary: 'Técnica validada: mostrar un precio de referencia incrementa conversión hasta 30%.',
       why: 'Táctica de alto impacto y bajo costo de implementación.',
+      confidence: 'high' as const,
+      confidenceScore: 85,
+      confidenceExplanation: 'Investigación primaria ARIYH con porcentaje concreto y metodología documentada. Fuente de alta confiabilidad.',
+      evidence: [
+        { contentId: 'c1', quote: 'Price anchoring puede incrementar conversión hasta 30% en landing pages', isExplicit: true, weight: 'primary' as const },
+      ],
+      sourceCount: 1,
+      isConsolidated: false,
     },
     {
       id: 'i3', priority: 'medium', topicIds: ['t1'],
       title: 'Segmentá tu lista por intención de compra antes de nurturar',
       summary: 'HubSpot creció 400k suscriptores segmentando por señales de intención.',
       why: 'Relevante directo para tu foco en lead nurturing y automatización.',
+      confidence: 'medium' as const,
+      confidenceScore: 62,
+      confidenceExplanation: 'Un solo caso de estudio sin datos primarios independientes. El resultado es verificable pero la causalidad es inferida.',
+      evidence: [
+        { contentId: 'c2', quote: 'HubSpot creció newsletter de 0 a 400k segmentando por intención de compra', isExplicit: true, weight: 'primary' as const },
+      ],
+      sourceCount: 1,
+      isConsolidated: false,
+      inferenceNote: 'La relación directa entre segmentación e intención y el crecimiento de lista es inferida. Pueden existir otras variables causales.',
     },
   ],
   actions: [
@@ -214,18 +274,42 @@ export const MOCK_ANALYSIS_V2: AnalysisResult = {
       title: 'Retener un cliente cuesta 5x menos que adquirir uno nuevo',
       summary: 'El churn silencioso en SaaS B2B suele ocurrir en los primeros 90 días. El onboarding es tu mayor oportunidad de retención.',
       why: 'Con presupuesto limitado, mejorar retención tiene mayor ROI que invertir más en adquisición.',
+      confidence: 'high' as const,
+      confidenceScore: 82,
+      confidenceExplanation: 'Dato ampliamente respaldado por múltiples estudios de industria SaaS. Corroborado por caso de HubSpot.',
+      evidence: [
+        { contentId: 'c2', quote: 'Retención y LTV como resultado de nurturing correcto', isExplicit: false, weight: 'supporting' as const },
+        { contentId: 'c5', quote: 'Compradores B2B que se autoconvierten tienen mejor retención', isExplicit: false, weight: 'supporting' as const },
+      ],
+      sourceCount: 2, isConsolidated: true,
     },
     {
       id: 'i2', priority: 'high', topicIds: ['t2'],
       title: 'El self-serve onboarding puede reducir churn hasta un 40%',
       summary: 'Usuarios que llegan al "aha moment" solos tienen 3x más probabilidad de convertirse en clientes de largo plazo.',
       why: 'Directo a tu foco actual: si reducís churn temprano, el funnel de adquisición rinde más.',
+      confidence: 'medium' as const,
+      confidenceScore: 68,
+      confidenceExplanation: 'Benchmark de industria PLG sin fuente primaria citada. El porcentaje 40% proviene de agregación de casos, no estudio controlado.',
+      evidence: [
+        { contentId: 'c1', quote: 'Self-serve onboarding aumenta activación y retención temprana', isExplicit: false, weight: 'primary' as const },
+      ],
+      sourceCount: 1, isConsolidated: false,
+      inferenceNote: 'El "40% de reducción de churn" es un benchmark de industria, no un dato de investigación primaria.',
     },
     {
       id: 'i3', priority: 'medium', topicIds: ['t3'],
       title: 'El SEO semántico supera al keyword stuffing en B2B',
       summary: 'Google prioriza responder intenciones, no densidad de palabras clave. Clusters temáticos tienen más impacto que artículos sueltos.',
       why: 'Canal orgánico con alto retorno para equipos pequeños sin presupuesto de ads.',
+      confidence: 'low' as const,
+      confidenceScore: 45,
+      confidenceExplanation: 'Fuente con señales de hype (LinkedIn list). Sin datos primarios. La tendencia general es conocida pero los números específicos no están respaldados.',
+      evidence: [
+        { contentId: 'c3', quote: 'SEO semántico y clusters como estrategia orgánica', isExplicit: false, weight: 'primary' as const },
+      ],
+      sourceCount: 1, isConsolidated: false,
+      inferenceNote: 'Insight basado en fuente con nivel de evidencia bajo. Validar antes de invertir recursos.',
     },
   ],
   actions: [

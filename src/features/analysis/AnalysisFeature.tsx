@@ -4,6 +4,7 @@ import { formatDateTime } from '@/shared/utils/dates'
 import { TopicClusters } from './components/TopicClusters'
 import { InsightList } from './components/InsightList'
 import { SignalNoiseBar } from './components/SignalNoiseBar'
+import { SourceQualitySummary } from './components/SourceQualitySummary'
 
 interface AnalysisFeatureProps {
   analysis: AnalysisResult
@@ -29,9 +30,11 @@ export function AnalysisFeature({ analysis, content }: AnalysisFeatureProps) {
         />
       </div>
 
-      <div className="card fade-up fade-up-1">
-        <div className="card-label">Insights priorizados</div>
-        <InsightList insights={analysis.insights} />
+      <SourceQualitySummary content={content} />
+
+      <div className="card fade-up fade-up-2">
+        <div className="card-label">Insights con trazabilidad</div>
+        <InsightList insights={analysis.insights} content={content} />
       </div>
     </>
   )

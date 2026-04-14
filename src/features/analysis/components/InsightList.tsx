@@ -1,24 +1,23 @@
 import { Insight } from '@/entities/analysis/types'
-import { PriorityBadge } from '@/shared/ui/Badge/Badge'
+import { ContentItem } from '@/entities/content/types'
+import { CanonicalInsightCard } from './CanonicalInsightCard'
 
 interface InsightListProps {
   insights: Insight[]
+  content?: ContentItem[]
   compact?: boolean
 }
 
-export function InsightList({ insights, compact = false }: InsightListProps) {
+export function InsightList({ insights, content = [], compact = false }: InsightListProps) {
   return (
     <div className="mt-16">
       {insights.map((ins) => (
-        <div key={ins.id} className={`insight-card ${ins.priority}`}>
-          <div className="flex items-center gap-8 mb-6">
-            <PriorityBadge priority={ins.priority} />
-            {!compact && <div className="insight-title">{ins.title}</div>}
-          </div>
-          {compact && <div className="insight-title">{ins.title}</div>}
-          <div className="insight-summary">{ins.summary}</div>
-          {!compact && <div className="insight-why">💡 {ins.why}</div>}
-        </div>
+        <CanonicalInsightCard
+          key={ins.id}
+          insight={ins}
+          content={content}
+          compact={compact}
+        />
       ))}
     </div>
   )

@@ -2,7 +2,7 @@ import { ContentItem } from '@/entities/content/types'
 import { Button } from '@/shared/ui/Button/Button'
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState'
 import { formatDate } from '@/shared/utils/dates'
-import { getSourceAuthority, AUTHORITY_LABELS } from '@/shared/utils/urls'
+import { SourceValidator } from '@/services/source-validation/SourceValidator'
 
 const TYPE_LABELS: Record<string, string> = {
   link: 'URL', text: 'TXT', pdf: 'PDF', summary: 'SUM',
@@ -38,17 +38,19 @@ export function ContentList({ items, onDelete }: ContentListProps) {
       )}
 
       {items.map((item) => {
-        const scores        = item.analysis?.criteriaScores ?? []
-        const passedCount   = scores.filter((cs) => cs.passed).length
-        const allPassed     = scores.length > 0 && passedCount === scores.length
-        const nonePassed    = scores.length > 0 && passedCount === 0
-        const authority     = item.source ? getSourceAuthority(item.source) : null
+        const scores      = item.analysis?.criteriaScores ?? []
+        const sq          = item.analysis?.sourceQuality
+        const passedCount = scores.filter((cs) => cs.passed).length
+        const allPassed   = scores.length > 0 && passedCount === scores.length
+        const nonePassed  = scores.length > 0 && passedCount === 0
 
-        const criteriaCountClass = allPassed
-          ? 'criteria-count-full'
+        const criteriaCountColor = allPassed
+          ? 'var(--high)'
           : nonePassed
-          ? 'criteria-count-none'
-          : 'criteria-count-partial'
+          ? 'var(--noise)'
+          : 'var(--mid)'
+
+        const hasValidationBar = scores.length > 0 || !!sq
 
         return (
           <div key={item.id} className="content-item">
@@ -58,7 +60,7 @@ export function ContentList({ items, onDelete }: ContentListProps) {
 
             <div className="flex-1" style={{ minWidth: 0 }}>
 
-              {/* ── Row 1: title + source + authority ── */}
+              {/* ── Row 1: title + source + tier badge ── */}
               <div className="flex items-center gap-8 mb-8" style={{ flexWrap: 'wrap' }}>
                 <div className="content-title flex-1" style={{ margin: 0 }}>
                   {item.title || item.raw.slice(0, 70)}
@@ -66,33 +68,75 @@ export function ContentList({ items, onDelete }: ContentListProps) {
                 {item.source && (
                   <span
                     className="tag"
-                    style={{ color: 'var(--accent)', borderColor: 'rgba(109,40,217,.25)', background: 'rgba(109,40,217,.07)', flexShrink: 0 }}
+                    style={{ color: 'var(--accent)', borderColor: 'rgba(109,40,217,.25)', background: 'rgba(109,40,217,.07)', flexShrink: 0, fontSize: 10 }}
                   >
                     {item.source}
                   </span>
                 )}
-                {authority && (
-                  <span className={`badge authority-${authority}`} style={{ flexShrink: 0 }}>
-                    {AUTHORITY_LABELS[authority]}
+                {sq && (
+                  <span
+                    className="tag"
+                    style={{
+                      fontSize: 10, flexShrink: 0,
+                      color:       SourceValidator.tierColor(sq.tier),
+                      borderColor: `${SourceValidator.tierColor(sq.tier)}44`,
+                      background:  `${SourceValidator.tierColor(sq.tier)}0f`,
+                    }}
+                  >
+                    {SourceValidator.tierLabel(sq.tier)}
                   </span>
                 )}
               </div>
 
-              {/* ── Row 2: criteria match bar — HERO ── */}
-              {scores.length > 0 && (
+              {/* ── Row 2: validation bar (source quality + criteria match) ── */}
+              {hasValidationBar && (
                 <div className="criteria-bar">
-                  <div className="flex gap-4 items-center">
-                    {scores.map((cs, i) => (
-                      <span
-                        key={i}
-                        className={`criteria-dot ${cs.passed ? 'criteria-dot-pass' : 'criteria-dot-fail'}`}
-                        title={cs.reason}
-                      />
-                    ))}
-                  </div>
-                  <span className={`text-xs font-mono ${criteriaCountClass}`}>
-                    {passedCount}/{scores.length} criterios
-                  </span>
+
+                  {/* Source quality mini-bar */}
+                  {sq && (
+                    <>
+                      <div className="flex gap-2">
+                        {[20, 40, 60, 80, 100].map((threshold) => (
+                          <span
+                            key={threshold}
+                            style={{
+                              display: 'inline-block', width: 12, height: 3, borderRadius: 2,
+                              background: sq.overall >= threshold
+                                ? SourceValidator.tierColor(sq.tier)
+                                : 'var(--border)',
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs font-mono text-dim">{sq.overall}/100</span>
+                      {sq.flags.includes('hype')       && <span style={{ fontSize: 10, color: 'var(--mid)' }}>⚑ hype</span>}
+                      {sq.flags.includes('unverified') && <span style={{ fontSize: 10, color: 'var(--noise)' }}>⚑ sin verificar</span>}
+                      {sq.flags.includes('opinion-only') && <span style={{ fontSize: 10, color: 'var(--text3)' }}>⚑ solo opinión</span>}
+
+                      {scores.length > 0 && (
+                        <span style={{ display: 'inline-block', width: 1, height: 10, background: 'var(--border)', margin: '0 4px' }} />
+                      )}
+                    </>
+                  )}
+
+                  {/* Criteria match */}
+                  {scores.length > 0 && (
+                    <>
+                      <div className="flex gap-3">
+                        {scores.map((cs, i) => (
+                          <span
+                            key={i}
+                            className={`criteria-dot ${cs.passed ? 'criteria-dot-pass' : 'criteria-dot-fail'}`}
+                            title={cs.reason}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs font-mono" style={{ color: criteriaCountColor }}>
+                        {passedCount}/{scores.length} criterios
+                      </span>
+                    </>
+                  )}
+
                   {item.analysis && (
                     <span className="text-xs text-dim" style={{ marginLeft: 'auto' }}>
                       {item.analysis.relevanceScore}% relevante
@@ -101,7 +145,7 @@ export function ContentList({ items, onDelete }: ContentListProps) {
                 </div>
               )}
 
-              {/* ── Row 3: takeaway o noise reason ── */}
+              {/* ── Row 3: takeaway or noise reason ── */}
               {item.analysis?.keyTakeaway && !item.analysis.isNoise && (
                 <div className="content-takeaway">"{item.analysis.keyTakeaway}"</div>
               )}
@@ -111,7 +155,7 @@ export function ContentList({ items, onDelete }: ContentListProps) {
                 </div>
               )}
 
-              {/* ── Row 4: detalle por criterio ── */}
+              {/* ── Row 4: detailed criteria tags ── */}
               {scores.length > 0 && (
                 <div className="flex gap-4 flex-wrap mt-6">
                   {scores.map((cs) => (
@@ -120,11 +164,10 @@ export function ContentList({ items, onDelete }: ContentListProps) {
                       className="tag"
                       title={cs.reason}
                       style={{
-                        fontSize: 10,
+                        fontSize: 10, cursor: 'help',
                         background:  cs.passed ? 'rgba(21,128,61,.08)' : 'rgba(185,28,28,.07)',
                         color:       cs.passed ? 'var(--high)'         : 'var(--noise)',
                         borderColor: cs.passed ? 'rgba(21,128,61,.2)'  : 'rgba(185,28,28,.2)',
-                        cursor: 'help',
                       }}
                     >
                       {cs.passed ? '✓' : '✗'}{' '}
@@ -134,7 +177,7 @@ export function ContentList({ items, onDelete }: ContentListProps) {
                 </div>
               )}
 
-              {/* ── Row 5: meta + signal badge + topics ── */}
+              {/* ── Row 5: meta ── */}
               <div className="flex items-center gap-8 mt-8 flex-wrap">
                 <span className="content-meta">{formatDate(item.addedAt)}</span>
                 {item.analysis?.isNoise   && <span className="badge badge-noise">🚫 ruido</span>}

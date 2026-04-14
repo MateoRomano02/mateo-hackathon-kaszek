@@ -1,3 +1,5 @@
+import { SourceQualityScore } from '@/entities/source/types'
+
 export type ContentType = 'link' | 'text' | 'pdf' | 'summary'
 
 export type ContentStatus = 'pending' | 'analyzed'
@@ -15,6 +17,8 @@ export interface ContentAnalysis {
   keyTakeaway: string
   relevanceScore: number
   criteriaScores?: CriterionScore[]
+  /** Source quality — the foundation of the truth layer */
+  sourceQuality?: SourceQualityScore
 }
 
 export interface ContentItem {
