@@ -98,17 +98,11 @@ export function ChatInterface() {
           <button className="btn btn-ghost btn-sm" onClick={() => setAiMode(aiMode === 'mock' ? 'anthropic' : 'mock')}>
             {aiMode === 'anthropic' ? 'Claude AI' : 'Demo'}
           </button>
-<<<<<<< HEAD
-          {voiceError && <span style={{ fontSize: 11, color: '#e53e3e', maxWidth: 280, textAlign: 'right', lineHeight: 1.3 }}>{MIC_ERROR_LABELS[voiceError] ?? MIC_ERROR_LABELS['unknown']}</span>}
-          {isTranscribing && !voiceError && (
-=======
-
           {voiceError && (
             <span style={{ fontSize: 11, color: '#e53e3e', maxWidth: 280, textAlign: 'right', lineHeight: 1.3 }}>
               {MIC_ERROR_LABELS[voiceError] ?? MIC_ERROR_LABELS['unknown']}
             </span>
           )}
-
           {loadingPct !== null && !voiceError && (
             <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1.5 }} />
@@ -116,7 +110,6 @@ export function ChatInterface() {
             </span>
           )}
           {isTranscribing && loadingPct === null && !voiceError && (
->>>>>>> 8937f6c (feat: update dependencies and enhance voice input functionality)
             <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1.5 }} />
               Transcribiendo...
