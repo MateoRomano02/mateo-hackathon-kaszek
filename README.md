@@ -1,42 +1,46 @@
-# 🚀 Lector Mágico de Precios (Kaszek x Anthropic Hackathon)
+# 🚀 SIGNAL OS
+> **Copiloto de Aprendizaje Técnico Personalizado**
 
-Un middleware de actualización dinámica de inventario B2B diseñado para economías inflacionarias. Impulsado por **Claude 3.5 Sonnet** y **React 19**.
+> *El puente entre el Ruido Informativo y la Infraestructura de Ejecución Táctica para perfiles no-técnicos.*
 
-## 📌 El Problema (Mercado LATAM)
-En mercados de alta inflación (ej. Argentina), las PYMES de comercio electrónico y revendedores en MercadoLibre/TiendaNube reciben nuevas listas de precios de sus fabricantes semanalmente. Estos datos suelen llegar en **formatos no estructurados** (PDFs escaneados, imágenes, Excels rotos).
-Atualizar manualmente 300+ SKUs en MercadoLibre cuesta horas de trabajo humano, retrasa las ventas y produce graves errores de márgenes de rentabilidad.
+## 📌 El Contexto (El Gap)
+Las capacidades de la Inteligencia Artificial crecen exponencialmente, pero la adopción en las empresas y profesionales no técnicos crece linealmente. La gente consume información fragmentada en X, YouTube, Newsletters y Papers, generando **obesidad informativa** y ansiedad, sin lograr traducirlo a un ROI real en su carrera.
 
-## 💡 Nuestra Solución (Cambio de Paradigma)
-No exigimos que el proveedor limpie sus datos. Nuestra aplicación actúa como un **Auditor Cognitivo**:
-1. El vendedor sube el PDF/Imagen del catálogo del proveedor.
-2. Ingresa su regla comercial (ej. *"Aplicar Markup del 40%"*).
-3. **Claude 3.5 Sonnet** (via Tool Use & Zod) extrae las entidades subyacentes, hace matching semántico con los SKUs de la tienda y expulsa un JSON estrictamente estructurado.
-4. El frontend inyecta masivamente las actualizaciones vía API a MercadoLibre / TiendaNube.
+## 🧠 ¿Qué es SignalOS?
+Signal OS es un **Technical Learning OS** estructurado bajo una arquitectura de "Agentes Especializados".
+No somos un agregador de noticias. Somos la herramienta que convierte "Hoy leí sobre Agentes", en "Este es tu repositorio de Agentes, en base a tu rol en la empresa, configúralo haciendo clic aquí". 
 
-## 🛠️ Stack Tecnológico (Zero-Technical Debt)
-- **Frontend Core:** React 19 + TypeScript + Vite.
-- **Estilos:** Tailwind CSS v4 + Shadcn UI (Componentes Radix).
-- **Gestión de Estado:** Zustand.
-- **Validación & Tool Use:** Zod.
-- **Inteligencia Artificial:** Anthropic SDK (Uso intensivo de JSON Generation, Prompt Caching para escalabilidad).
+## ⚖️ Funciones Principales y Outcomes
+El Copiloto orquesta el descubrimiento:
+- **Onboarding de Vertical (Marketer):** Filtramos el ruido en base al ROI que te sirve hoy.
+- **Skill Stocks (Monitor Táctico):** La herramienta que detectará si tu conocimiento actual está en *Rising* o *Degrading*, forzando el reemplazo cognoscitivo.
+- **Agentes Integrados (Mock):** Scout, Dedupe, Relevance, Tutor, Practice y Memory.
 
-## ⚡ Guía de Inicio Rápido (Local Dev)
+---
 
-1. **Instalar dependencias:**
+## 🛠️ Stack Tecnológico de Refactorización (Staff level)
+- React 19 + TypeScript + Vite
+- **Arquitectura estricta:** Feature-Sliced Design.
+  - `src/features/`: Casos de uso core.
+  - `src/pages/`: Integración de módulos.
+  - `src/entities/`: Tipos de dominio atómico.
+  - `src/services/`: Capa de inyección Mock/AI aislada de la UI.
+- **Diseño Visual:** Estética *Dark Premium & Minimalista*. Componentes encapsulados.
+
+## 👨‍💻 Ejecutar el Entorno (Local)
+
+1. Instalar dependencias puras:
    ```bash
    npm install
    ```
 
-2. **Configurar Entorno:**
-   Crear un archivo `.env` basado en `.env.example`:
-   ```bash
-   VITE_ANTHROPIC_API_KEY=tu_clave_aqui
-   ```
+2. Configurar la abstracción de entorno:
+   Copiar `.env.example` a `.env` si aplica la abstracción nativa.
 
-3. **Ejecutar Entorno de Desarrollo:**
+3. Correr dev server:
    ```bash
    npm run dev
    ```
 
 ---
-*Desarrollado para el Kaszek x Anthropic Hackathon 2024.*
+*Diseñado por Equipo: Lucas, Mateo, Dante, Maru para el Kaszekathon 2024.*
