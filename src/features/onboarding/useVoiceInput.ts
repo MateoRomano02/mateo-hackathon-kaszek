@@ -1,11 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-<<<<<<< HEAD
-import Anthropic from '@anthropic-ai/sdk'
-=======
 import { pipeline, env } from '@xenova/transformers'
 
 env.allowLocalModels = false
->>>>>>> ccfdd60 (feat)
 
 export type VoiceError = 'not-allowed' | 'audio-capture' | 'transcription' | 'network-fallback' | null
 
@@ -49,40 +45,8 @@ declare global {
   }
 }
 
-// ─── Whisper fallback (MediaRecorder + @xenova/transformers) ──────────────────
+// ─── Whisper fallback ─────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-const getClient = () =>
-  new Anthropic({
-    apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
-    dangerouslyAllowBrowser: true,
-  })
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1])
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
-
-function getBestMimeType(): string {
-  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4']
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
-}
-
-export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
-  const [isListening, setIsListening] = useState(false)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const [transcript, setTranscript] = useState('')
-  const [isSupported, setIsSupported] = useState(false)
-  const [voiceError, setVoiceError] = useState<VoiceError>(null)
-  const loadingPct = null
-=======
 type WhisperPipeline = Awaited<ReturnType<typeof pipeline>>
 let whisperCache: WhisperPipeline | null = null
 let whisperLoading = false
@@ -111,8 +75,8 @@ async function getWhisper(onProgress?: (pct: number) => void): Promise<WhisperPi
 }
 
 function getBestMime(): string {
-  const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg']
-  return c.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg']
+  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? ''
 }
 
 async function toFloat32Mono16k(blob: Blob): Promise<Float32Array> {
@@ -133,37 +97,29 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
   const [isListening, setIsListening] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [loadingPct, setLoadingPct] = useState<number | null>(null)
-  const [interimText, setInterimText] = useState('')   // live text while speaking
+  const [interimText, setInterimText] = useState('')
   const [isSupported, setIsSupported] = useState(false)
   const [voiceError, setVoiceError] = useState<VoiceError>(null)
   const [useWhisperFallback, setUseWhisperFallback] = useState(false)
->>>>>>> ccfdd60 (feat)
 
   const speechRef = useRef<SpeechRecognitionInstance | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const onFinalRef = useRef(onFinalTranscript)
-  const finalAccRef = useRef('')   // accumulated final text from continuous speech
+  const finalAccRef = useRef('')
 
   useEffect(() => { onFinalRef.current = onFinalTranscript }, [onFinalTranscript])
 
-<<<<<<< HEAD
-  useEffect(() => { onFinalRef.current = onFinalTranscript }, [onFinalTranscript])
-
-  useEffect(() => {
-    setIsSupported(!!navigator.mediaDevices?.getUserMedia && !!window.MediaRecorder)
-=======
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     setIsSupported(!!(SR || (navigator.mediaDevices && typeof MediaRecorder !== 'undefined')))
-    // Pre-warm Whisper in background so it's ready if needed
+    // Pre-warm Whisper so it's ready if needed
     getWhisper((p) => setLoadingPct(p)).then(() => setLoadingPct(null)).catch(() => {})
->>>>>>> ccfdd60 (feat)
   }, [])
 
-  // ── Web Speech API path (live transcription) ────────────────────────────────
+  // ── Web Speech API (live transcription) ──────────────────────────────────────
 
-  const startSpeechRecognition = useCallback(() => {
+  const startSpeechRecognition = useCallback((): boolean => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return false
 
@@ -171,7 +127,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     const rec = new SR()
     rec.lang = 'es'
     rec.interimResults = true
-    rec.continuous = true     // keep listening until user stops
+    rec.continuous = true
 
     finalAccRef.current = ''
     setInterimText('')
@@ -186,7 +142,6 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
           interim += r[0].transcript
         }
       }
-      // Show live text in the input field
       setInterimText((finalAccRef.current + interim).trim())
     }
 
@@ -201,9 +156,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
       if (e.error === 'aborted') return
       setIsListening(false)
       setInterimText('')
-
       if (e.error === 'network') {
-        // Fall back to Whisper silently
         setUseWhisperFallback(true)
         setVoiceError('network-fallback')
       } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -223,7 +176,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     }
   }, [])
 
-  // ── Whisper fallback path (record → transcribe after stop) ──────────────────
+  // ── Whisper fallback (record → transcribe after stop) ─────────────────────────
 
   const startWhisperRecording = useCallback(async () => {
     let stream: MediaStream
@@ -242,38 +195,6 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
 
     recorder.onstop = async () => {
       stream.getTracks().forEach((t) => t.stop())
-<<<<<<< HEAD
-      const chunks = chunksRef.current
-      if (chunks.length === 0) return
-
-      const effectiveMime = mimeType || 'audio/webm'
-      const blob = new Blob(chunks, { type: effectiveMime })
-
-      setIsTranscribing(true)
-      try {
-        const base64Audio = await blobToBase64(blob)
-        const client = getClient()
-
-        const response = await client.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 256,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Transcribi exactamente lo que se dice en este audio. Devolvé solo la transcripcion, sin explicaciones ni comillas.' },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              { type: 'audio', source: { type: 'base64', media_type: effectiveMime as 'audio/webm', data: base64Audio } } as any,
-            ],
-          }],
-        })
-
-        const textBlock = response.content.find((b) => b.type === 'text') as Anthropic.TextBlock | undefined
-        const text = textBlock?.text?.trim() ?? ''
-        if (text) {
-          setTranscript(text)
-          onFinalRef.current?.(text)
-        }
-=======
       if (chunksRef.current.length === 0) return
 
       const blob = new Blob(chunksRef.current, { type: mime || 'audio/webm' })
@@ -286,11 +207,11 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
         const result: any = await (model as any)(audio, { language: 'spanish', task: 'transcribe' })
         const text: string = (Array.isArray(result) ? result[0]?.text : result?.text)?.trim() ?? ''
         if (text) onFinalRef.current?.(text)
->>>>>>> ccfdd60 (feat)
       } catch {
         setVoiceError('transcription')
       } finally {
         setIsTranscribing(false)
+        setLoadingPct(null)
       }
     }
 
@@ -299,7 +220,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     setIsListening(true)
   }, [])
 
-  // ── Public API ───────────────────────────────────────────────────────────────
+  // ── Public API ────────────────────────────────────────────────────────────────
 
   const startListening = useCallback(async () => {
     setVoiceError(null)
@@ -308,7 +229,6 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     if (!useWhisperFallback) {
       const ok = startSpeechRecognition()
       if (ok === false) {
-        // No Web Speech API available → go straight to Whisper
         setUseWhisperFallback(true)
         await startWhisperRecording()
       }
@@ -318,13 +238,8 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
   }, [useWhisperFallback, startSpeechRecognition, startWhisperRecording])
 
   const stopListening = useCallback(() => {
-    // Stop whichever path is active
-    if (speechRef.current) {
-      speechRef.current.stop()   // triggers onend → sends final text
-    }
-    if (recorderRef.current?.state === 'recording') {
-      recorderRef.current.stop() // triggers onstop → transcribes
-    }
+    speechRef.current?.stop()
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
     setIsListening(false)
   }, [])
 
@@ -334,7 +249,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void) {
     isListening,
     isTranscribing,
     loadingPct,
-    interimText,        // live text to show in input while speaking
+    interimText,
     isSupported,
     voiceError,
     useWhisperFallback,
