@@ -20,7 +20,11 @@ interface AppState {
   projects: GeneratedProject[]
   addProject: (project: GeneratedProject) => void
 
-  // LMS progress: projectId -> completed step numbers
+  // Saved courses (resources the user started learning)
+  savedCourses: { id: string; title: string; content: string; savedAt: string }[]
+  saveCourse: (title: string, content: string) => void
+
+  // LMS progress: key -> completed step numbers
   projectProgress: Record<string, number[]>
   toggleStepComplete: (projectId: string, stepNum: number) => void
 
@@ -84,6 +88,13 @@ export const useAppStore = create<AppState>()(
       addProject: (project) =>
         set((state) => ({ projects: [project, ...state.projects] })),
 
+      savedCourses: [],
+      saveCourse: (title, content) =>
+        set((state) => {
+          if (state.savedCourses.some((c) => c.title === title)) return state
+          return { savedCourses: [{ id: crypto.randomUUID(), title, content, savedAt: new Date().toISOString() }, ...state.savedCourses] }
+        }),
+
       projectProgress: {},
       toggleStepComplete: (projectId, stepNum) =>
         set((state) => {
@@ -109,6 +120,7 @@ export const useAppStore = create<AppState>()(
           skillStocks: [],
           contentItems: [],
           projects: [],
+          savedCourses: [],
           projectProgress: {},
           isLoading: false,
           error: null,
@@ -122,6 +134,7 @@ export const useAppStore = create<AppState>()(
         skillStocks: state.skillStocks,
         contentItems: state.contentItems.filter((c) => c.status === 'done'),
         projects: state.projects,
+        savedCourses: state.savedCourses,
         projectProgress: state.projectProgress,
         aiMode: state.aiMode,
       }),

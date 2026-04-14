@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { OnboardingPage } from '@/pages/onboarding/OnboardingPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
+import { CoursesPage } from '@/pages/courses/CoursesPage'
+import { CuratorPage } from '@/pages/curator/CuratorPage'
 import { AppShell } from '@/app/layouts/AppShell'
 import { ROUTES } from '@/shared/constants/routes'
 
@@ -11,6 +13,8 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
+      { path: ROUTES.COURSES, element: <CoursesPage /> },
+      { path: ROUTES.CURATOR, element: <CuratorPage /> },
     ],
   },
 ])

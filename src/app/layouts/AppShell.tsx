@@ -7,6 +7,8 @@ import { ROUTES } from '@/shared/constants/routes'
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: 'dash' as const, label: 'Dashboard' },
+  { to: ROUTES.COURSES, icon: 'zap' as const, label: 'Mis Cursos' },
+  { to: ROUTES.CURATOR, icon: 'inbox' as const, label: 'Curador' },
 ]
 
 export function AppShell() {
@@ -19,7 +21,9 @@ export function AppShell() {
 
   if (!userProfile) return null
 
-  const getBadge = (_to: string): number | null => {
+  const savedCourses = useAppStore((s) => s.savedCourses)
+  const getBadge = (to: string): number | null => {
+    if (to === ROUTES.COURSES && savedCourses.length > 0) return savedCourses.length
     return null
   }
 
