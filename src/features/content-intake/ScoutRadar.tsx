@@ -3,74 +3,77 @@ import { useAppStore } from '@/app/providers/store'
 import { ContentCard } from './ContentCard'
 
 export function ScoutRadar() {
-  const { isScanning, scanStep, scanProgress, scanTrends } = useScoutRadar()
+  const { isScanning, logs, scanProgress, scanTrends } = useScoutRadar()
   const contentItems = useAppStore((s) => s.contentItems)
-  const radarItems = contentItems.filter((c) => c.source === 'url')
+  const radarItems = contentItems.filter((c) => c.source === 'url' && c.status === 'done')
 
   return (
     <div>
-      {/* Scan button + progress */}
-      <div className="card" style={{ marginBottom: 24, textAlign: 'center' }}>
+      {/* Radar control */}
+      <div className="card" style={{ marginBottom: 24 }}>
         {!isScanning ? (
-          <>
-            <div style={{ marginBottom: 16 }}>
-              <div className="card-label" style={{ textAlign: 'center' }}>Scout Radar</div>
-              <p style={{ fontSize: 13, color: 'var(--text2)' }}>
-                Escanea Hacker News, filtra por tu stack y procesa las tendencias con el Truth Pipeline.
-              </p>
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ width: 64, height: 64, margin: '0 auto 16px', borderRadius: 16, background: 'rgba(109,40,217,.08)', border: '1px solid rgba(109,40,217,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+              📡
             </div>
+            <h3 style={{ fontSize: 16, fontFamily: 'var(--font-serif)', marginBottom: 4 }}>Scout Radar Autonomo</h3>
+            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
+              Escanea Hacker News y Reddit basado en tu stack. Filtra por relevancia. Procesa con el Truth Pipeline.
+            </p>
             <button className="btn btn-primary btn-lg" onClick={scanTrends}>
-              Escanear Tendencias
+              Escanear Tendencias de mi Stack
             </button>
-          </>
+          </div>
         ) : (
           <>
-            {/* Radar animation */}
-            <div style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 20px' }}>
-              <div style={{
-                width: 80, height: 80, borderRadius: '50%',
-                border: '2px solid var(--border)',
-                position: 'relative', overflow: 'hidden',
-              }}>
-                <div style={{
-                  position: 'absolute', top: '50%', left: '50%',
-                  width: 40, height: 2, background: 'var(--accent)',
-                  transformOrigin: 'left center',
-                  animation: 'spin 2s linear infinite',
-                }} />
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                  background: `conic-gradient(from 0deg, transparent 0%, rgba(109,40,217,0.15) 10%, transparent 20%)`,
-                  animation: 'spin 2s linear infinite',
-                }} />
+            {/* Progress bar */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span className="card-label" style={{ margin: 0 }}>Escaneando...</span>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>{scanProgress}%</span>
+              </div>
+              <div className="progress-container">
+                <div className="progress-fill" style={{ width: `${scanProgress}%` }} />
               </div>
             </div>
 
-            <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>{scanStep}</p>
-
-            {/* Progress bar */}
-            <div className="progress-container" style={{ maxWidth: 300, margin: '0 auto' }}>
-              <div className="progress-fill" style={{ width: `${scanProgress}%` }} />
+            {/* Terminal-style log */}
+            <div style={{
+              background: '#0d0d11', borderRadius: 8, padding: 14, maxHeight: 240, overflowY: 'auto',
+              fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.8,
+            }}>
+              {logs.map((log) => (
+                <div key={log.id} style={{ display: 'flex', gap: 8, color: log.status === 'error' ? '#ef4444' : log.status === 'done' ? '#a3a3a3' : '#c4b5fd' }}>
+                  <span style={{ color: '#6b7280', flexShrink: 0 }}>{log.timestamp}</span>
+                  <span style={{ color: log.status === 'running' ? '#c4b5fd' : log.status === 'error' ? '#ef4444' : '#22c55e', flexShrink: 0 }}>
+                    {log.status === 'running' ? '●' : log.status === 'done' ? '✓' : '✗'}
+                  </span>
+                  <span>{log.step}</span>
+                </div>
+              ))}
+              {isScanning && (
+                <div style={{ display: 'flex', gap: 8, color: '#c4b5fd' }}>
+                  <span style={{ color: '#6b7280' }}>{new Date().toLocaleTimeString('es-AR')}</span>
+                  <span className="analyze-spinner" style={{ width: 10, height: 10, margin: 0, borderWidth: 1, borderColor: '#4c1d95', borderTopColor: '#c4b5fd' }} />
+                  <span>procesando...</span>
+                </div>
+              )}
             </div>
-            <p className="progress-label" style={{ marginTop: 8 }}>{scanProgress}%</p>
           </>
         )}
       </div>
 
-      {/* Results feed */}
+      {/* Results */}
       {radarItems.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {radarItems.map((item) => (
-            <ContentCard key={item.id} item={item} />
-          ))}
-        </div>
-      )}
-
-      {radarItems.length === 0 && !isScanning && (
-        <div className="empty-state">
-          <div className="empty-icon" style={{ fontSize: 24 }}>📡</div>
-          <div className="empty-title">Radar inactivo</div>
-          <div className="empty-desc">Presiona "Escanear Tendencias" para que el Scout busque contenido relevante para tu perfil.</div>
+        <div>
+          <div className="card-label" style={{ marginBottom: 12 }}>
+            Hallazgos del Radar ({radarItems.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {radarItems.map((item) => (
+              <ContentCard key={item.id} item={item} />
+            ))}
+          </div>
         </div>
       )}
     </div>
