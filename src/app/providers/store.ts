@@ -24,6 +24,10 @@ interface AppState {
   savedCourses: { id: string; title: string; content: string; savedAt: string }[]
   saveCourse: (title: string, content: string) => void
 
+  // Curator results (persisted)
+  curatorResults: { url: string; verdict: 'signal' | 'noise'; reason: string; relevanceScore: number }[]
+  setCuratorResults: (results: { url: string; verdict: 'signal' | 'noise'; reason: string; relevanceScore: number }[]) => void
+
   // LMS progress: key -> completed step numbers
   projectProgress: Record<string, number[]>
   toggleStepComplete: (projectId: string, stepNum: number) => void
@@ -88,6 +92,9 @@ export const useAppStore = create<AppState>()(
       addProject: (project) =>
         set((state) => ({ projects: [project, ...state.projects] })),
 
+      curatorResults: [],
+      setCuratorResults: (results) => set({ curatorResults: results }),
+
       savedCourses: [],
       saveCourse: (title, content) =>
         set((state) => {
@@ -120,6 +127,7 @@ export const useAppStore = create<AppState>()(
           skillStocks: [],
           contentItems: [],
           projects: [],
+          curatorResults: [],
           savedCourses: [],
           projectProgress: {},
           isLoading: false,
@@ -134,6 +142,7 @@ export const useAppStore = create<AppState>()(
         skillStocks: state.skillStocks,
         contentItems: state.contentItems.filter((c) => c.status === 'done'),
         projects: state.projects,
+        curatorResults: state.curatorResults,
         savedCourses: state.savedCourses,
         projectProgress: state.projectProgress,
         aiMode: state.aiMode,
