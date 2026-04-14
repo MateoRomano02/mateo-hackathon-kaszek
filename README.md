@@ -1,51 +1,42 @@
-# Hackathon Kaszek x Anthropic — Buenos Aires 2026
+# 🚀 Lector Mágico de Precios (Kaszek x Anthropic Hackathon)
 
-> [COMPLETAR CON EL NOMBRE DE TU PROYECTO]
+Un middleware de actualización dinámica de inventario B2B diseñado para economías inflacionarias. Impulsado por **Claude 3.5 Sonnet** y **React 19**.
 
-Construido en el primer hackathon de Anthropic en LATAM — 14 de Abril, 2026.
+## 📌 El Problema (Mercado LATAM)
+En mercados de alta inflación (ej. Argentina), las PYMES de comercio electrónico y revendedores en MercadoLibre/TiendaNube reciben nuevas listas de precios de sus fabricantes semanalmente. Estos datos suelen llegar en **formatos no estructurados** (PDFs escaneados, imágenes, Excels rotos).
+Atualizar manualmente 300+ SKUs en MercadoLibre cuesta horas de trabajo humano, retrasa las ventas y produce graves errores de márgenes de rentabilidad.
 
-## ¿Qué hace?
-[COMPLETAR: descripción en 2-3 líneas de qué problema resuelve y para quién]
+## 💡 Nuestra Solución (Cambio de Paradigma)
+No exigimos que el proveedor limpie sus datos. Nuestra aplicación actúa como un **Auditor Cognitivo**:
+1. El vendedor sube el PDF/Imagen del catálogo del proveedor.
+2. Ingresa su regla comercial (ej. *"Aplicar Markup del 40%"*).
+3. **Claude 3.5 Sonnet** (via Tool Use & Zod) extrae las entidades subyacentes, hace matching semántico con los SKUs de la tienda y expulsa un JSON estrictamente estructurado.
+4. El frontend inyecta masivamente las actualizaciones vía API a MercadoLibre / TiendaNube.
 
-## Track
-[COMPLETAR: Ecommerce / Fintech / Educación / Open]
+## 🛠️ Stack Tecnológico (Zero-Technical Debt)
+- **Frontend Core:** React 19 + TypeScript + Vite.
+- **Estilos:** Tailwind CSS v4 + Shadcn UI (Componentes Radix).
+- **Gestión de Estado:** Zustand.
+- **Validación & Tool Use:** Zod.
+- **Inteligencia Artificial:** Anthropic SDK (Uso intensivo de JSON Generation, Prompt Caching para escalabilidad).
 
-## Demo
-[COMPLETAR: link al video de 2 minutos]
+## ⚡ Guía de Inicio Rápido (Local Dev)
 
----
+1. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
 
-## Instalación rápida (3 comandos)
+2. **Configurar Entorno:**
+   Crear un archivo `.env` basado en `.env.example`:
+   ```bash
+   VITE_ANTHROPIC_API_KEY=tu_clave_aqui
+   ```
 
-```bash
-# 1. Setup completo
-bash setup.sh
-
-# 2. Agregar tu API key
-echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
-
-# 3. Correr la UI
-streamlit run ui.py
-```
-
-## Arquitectura
-- `src/api/claude_client.py` — wrapper Claude API (chat, tool use, structured output, agentes)
-- `src/agents/base_agent.py` — loop agéntico con tool use automático
-- `src/tools/tool_definitions.py` — schemas de herramientas disponibles
-- `prompts/system_prompts.py` — prompts del sistema
-- `ui.py` — UI Streamlit (demo visual)
-- `api_server.py` — API FastAPI (endpoints REST)
-
-## Documentación del contexto
-- `CLAUDE.md` — cerebro del proyecto (Claude Code lo lee en cada sesión)
-- `context/IDEA.md` — descripción detallada de la idea y usuario
-- `context/FOUNDER_THINKING.md` — validación de negocio
-- `context/ARCHITECTURE.md` — decisiones técnicas
-- `context/TUTORIA.md` — guía de ejecución del día
-- `docs/HACKATHON_CONTEXT.md` — info del evento
-
-## Equipo
-- [Tu nombre] — founder/builder solo
+3. **Ejecutar Entorno de Desarrollo:**
+   ```bash
+   npm run dev
+   ```
 
 ---
-*Built with Claude Sonnet 4.6 at Kaszek x Anthropic Hackathon 2026, Buenos Aires*
+*Desarrollado para el Kaszek x Anthropic Hackathon 2024.*
