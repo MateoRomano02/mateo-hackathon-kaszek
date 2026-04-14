@@ -1,35 +1,74 @@
 import type { SkillStatus } from '@/shared/constants'
 
+// ── Source Authority ───────────────────────────────────────────────
+
+export type DomainAuthority = 'official_docs' | 'major_publication' | 'industry_blog' | 'social_media' | 'unknown'
+export type SourceType = 'primary' | 'secondary' | 'opinion' | 'aggregator'
+
+export interface SourceMetadata {
+  author: string | null
+  domainAuthority: DomainAuthority
+  freshnessDate: string | null
+  sourceType: SourceType
+  credibilityScore: number
+  credibilityReason: string
+}
+
+// ── Evidence & Confidence ─────────────────────────────────────────
+
+export type ConfidenceLevel = 'high' | 'medium' | 'low'
+
+export interface EvidenceReference {
+  exactQuote: string
+  inferenceFlag: boolean // true = Claude deduced it, false = explicitly stated in source
+}
+
+export interface ContradictionFlag {
+  description: string
+  resolution: string | null
+}
+
+// ── Canonical Insight (Truth Unit) ─────────────────────────────────
+
 export type ContentCategory = 'tutorial' | 'news' | 'tool' | 'case_study' | 'opinion'
-export type RelevanceLevel = 'high' | 'medium' | 'low'
 
 export interface RelatedSkill {
   skill: string
-  relevance: RelevanceLevel
   statusImpact: SkillStatus
   reason: string
 }
+
+export interface CanonicalInsight {
+  id: string
+  title: string
+  insight: string
+  confidenceLevel: ConfidenceLevel
+  confidenceScore: number
+  validationReason: string
+  evidence: EvidenceReference[]
+  relatedSkills: RelatedSkill[]
+  contradictions: ContradictionFlag[]
+  category: ContentCategory
+}
+
+// ── Content Item (Pipeline Unit) ───────────────────────────────────
+
+export type ContentStatus = 'pending' | 'scraping' | 'evaluating_source' | 'extracting_insights' | 'done' | 'error'
 
 export interface ContentItem {
   id: string
   source: 'url' | 'text'
   originalUrl?: string
   rawContent: string
-  analysis: AnalyzedContent | null
-  status: 'pending' | 'analyzing' | 'done' | 'error'
+  sourceMetadata: SourceMetadata | null
+  canonicalInsights: CanonicalInsight[]
+  overallRelevance: number
+  status: ContentStatus
   error?: string
   createdAt: string
 }
 
-export interface AnalyzedContent {
-  title: string
-  summary: string
-  mainTopics: string[]
-  relatedSkills: RelatedSkill[]
-  actionItems: string[]
-  relevanceScore: number
-  category: ContentCategory
-}
+// ── Projects (unchanged) ───────────────────────────────────────────
 
 export interface ProjectStep {
   step: number

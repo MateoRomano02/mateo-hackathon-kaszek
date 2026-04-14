@@ -123,83 +123,149 @@ export const BUILD_USER_PROFILE_TOOL = {
   },
 } as const
 
-// ── ANALYZE CONTENT TOOL ───────────────────────────────────────────
+// ── TRUTH PIPELINE: EVALUATE SOURCE ────────────────────────────────
 
-export const RelatedSkillSchema = z.object({
+export const EvaluateSourceOutputSchema = z.object({
+  author: z.string().nullable(),
+  domain_authority: z.enum(['official_docs', 'major_publication', 'industry_blog', 'social_media', 'unknown']),
+  freshness_date: z.string().nullable(),
+  source_type: z.enum(['primary', 'secondary', 'opinion', 'aggregator']),
+  credibility_score: z.number().min(0).max(10),
+  credibility_reason: z.string(),
+})
+
+export type EvaluateSourceOutput = z.infer<typeof EvaluateSourceOutputSchema>
+
+export const EVALUATE_SOURCE_TOOL = {
+  name: 'evaluate_source' as const,
+  description:
+    'Evalua la autoridad y credibilidad de una fuente de contenido. Mide cercania a la fuente primaria, autoridad del dominio, y frescura.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      author: { type: 'string', nullable: true, description: 'Autor del contenido, null si no identificable' },
+      domain_authority: {
+        type: 'string',
+        enum: ['official_docs', 'major_publication', 'industry_blog', 'social_media', 'unknown'],
+        description: 'Nivel de autoridad del dominio/fuente',
+      },
+      freshness_date: { type: 'string', nullable: true, description: 'Fecha de publicacion estimada (ISO), null si no detectable' },
+      source_type: {
+        type: 'string',
+        enum: ['primary', 'secondary', 'opinion', 'aggregator'],
+        description: 'Tipo de fuente: primary=docs oficiales/paper, secondary=cobertura, opinion=blog personal, aggregator=compilacion',
+      },
+      credibility_score: { type: 'number', description: 'Credibilidad de 0 a 10 (10 = fuente oficial primaria)' },
+      credibility_reason: { type: 'string', description: 'Por que esta fuente tiene este nivel de credibilidad' },
+    },
+    required: ['author', 'domain_authority', 'freshness_date', 'source_type', 'credibility_score', 'credibility_reason'],
+  },
+} as const
+
+// ── TRUTH PIPELINE: EXTRACT CANONICAL INSIGHTS ─────────────────────
+
+export const EvidenceSchema = z.object({
+  exact_quote: z.string(),
+  inference_flag: z.boolean(),
+})
+
+export const InsightRelatedSkillSchema = z.object({
   skill: z.string(),
-  relevance: z.enum(['high', 'medium', 'low']),
   status_impact: z.enum(['rising', 'stable', 'degrading', 'gone']),
   reason: z.string(),
 })
 
-export const AnalyzeContentOutputSchema = z.object({
+export const ContradictionSchema = z.object({
+  description: z.string(),
+  resolution: z.string().nullable(),
+})
+
+export const CanonicalInsightSchema = z.object({
   title: z.string(),
-  summary: z.string(),
-  main_topics: z.array(z.string()).min(1),
-  related_skills: z.array(RelatedSkillSchema).min(1),
-  action_items: z.array(z.string()),
-  relevance_score: z.number().min(0).max(10),
+  insight: z.string(),
+  confidence_level: z.enum(['high', 'medium', 'low']),
+  confidence_score: z.number().min(0).max(10),
+  validation_reason: z.string(),
+  evidence: z.array(EvidenceSchema).min(1),
+  related_skills: z.array(InsightRelatedSkillSchema).min(1),
+  contradictions: z.array(ContradictionSchema),
   category: z.enum(['tutorial', 'news', 'tool', 'case_study', 'opinion']),
 })
 
-export type AnalyzeContentOutput = z.infer<typeof AnalyzeContentOutputSchema>
+export const ExtractInsightsOutputSchema = z.object({
+  canonical_insights: z.array(CanonicalInsightSchema).min(1),
+  overall_relevance: z.number().min(0).max(10),
+})
 
-export const ANALYZE_CONTENT_TOOL = {
-  name: 'analyze_content' as const,
+export type ExtractInsightsOutput = z.infer<typeof ExtractInsightsOutputSchema>
+export type CanonicalInsightRaw = z.infer<typeof CanonicalInsightSchema>
+
+export const EXTRACT_CANONICAL_INSIGHTS_TOOL = {
+  name: 'extract_canonical_insights' as const,
   description:
-    'Analiza un contenido (articulo, tutorial, noticia, herramienta) y lo clasifica segun relevancia para el portafolio de skills del usuario. Devuelve skills relacionados, relevancia, y acciones sugeridas.',
+    'Extrae insights canonicos (Verdades Verificables) del contenido. Cada insight debe estar respaldado por evidencia textual exacta, con nivel de confianza y contradicciones detectadas.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      title: { type: 'string', description: 'Titulo del contenido analizado' },
-      summary: { type: 'string', description: 'Resumen del contenido en 2-3 oraciones' },
-      main_topics: {
+      canonical_insights: {
         type: 'array',
-        items: { type: 'string' },
-        description: 'Temas principales del contenido',
-      },
-      related_skills: {
-        type: 'array',
-        description: 'Skills del portafolio que este contenido impacta',
+        description: 'Insights canonicos extraidos del contenido',
         items: {
           type: 'object',
           properties: {
-            skill: { type: 'string', description: 'Nombre del skill' },
-            relevance: { type: 'string', enum: ['high', 'medium', 'low'] },
-            status_impact: {
+            title: { type: 'string', description: 'Titulo conciso del insight' },
+            insight: { type: 'string', description: 'La verdad canonica destilada (1-2 oraciones)' },
+            confidence_level: {
               type: 'string',
-              enum: ['rising', 'stable', 'degrading', 'gone'],
-              description: 'Si este contenido sugiere que el skill esta subiendo, estable, bajando o muerto',
+              enum: ['high', 'medium', 'low'],
+              description: 'high=evidencia directa, medium=inferencia razonable, low=opinion o dato no verificable',
             },
-            reason: { type: 'string', description: 'Por que este contenido impacta este skill' },
+            confidence_score: { type: 'number', description: 'Confianza de 0 a 10' },
+            validation_reason: { type: 'string', description: 'Por que este nivel de confianza' },
+            evidence: {
+              type: 'array',
+              description: 'Citas textuales exactas que respaldan el insight',
+              items: {
+                type: 'object',
+                properties: {
+                  exact_quote: { type: 'string', description: 'Cita textual exacta de la fuente' },
+                  inference_flag: { type: 'boolean', description: 'true si Claude dedujo esto, false si esta explicito en el texto' },
+                },
+                required: ['exact_quote', 'inference_flag'],
+              },
+            },
+            related_skills: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  skill: { type: 'string' },
+                  status_impact: { type: 'string', enum: ['rising', 'stable', 'degrading', 'gone'] },
+                  reason: { type: 'string' },
+                },
+                required: ['skill', 'status_impact', 'reason'],
+              },
+            },
+            contradictions: {
+              type: 'array',
+              description: 'Contradicciones detectadas con conocimiento previo',
+              items: {
+                type: 'object',
+                properties: {
+                  description: { type: 'string' },
+                  resolution: { type: 'string', nullable: true },
+                },
+                required: ['description', 'resolution'],
+              },
+            },
+            category: { type: 'string', enum: ['tutorial', 'news', 'tool', 'case_study', 'opinion'] },
           },
-          required: ['skill', 'relevance', 'status_impact', 'reason'],
+          required: ['title', 'insight', 'confidence_level', 'confidence_score', 'validation_reason', 'evidence', 'related_skills', 'contradictions', 'category'],
         },
       },
-      action_items: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Acciones concretas que el usuario puede tomar basado en este contenido',
-      },
-      relevance_score: {
-        type: 'number',
-        description: 'Relevancia del contenido para el usuario de 0 a 10',
-      },
-      category: {
-        type: 'string',
-        enum: ['tutorial', 'news', 'tool', 'case_study', 'opinion'],
-        description: 'Tipo de contenido',
-      },
+      overall_relevance: { type: 'number', description: 'Relevancia global del contenido para el usuario (0-10)' },
     },
-    required: [
-      'title',
-      'summary',
-      'main_topics',
-      'related_skills',
-      'action_items',
-      'relevance_score',
-      'category',
-    ],
+    required: ['canonical_insights', 'overall_relevance'],
   },
 } as const
 

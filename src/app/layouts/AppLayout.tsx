@@ -57,7 +57,7 @@ export function AppLayout() {
                   )
                 }
               >
-                Inbox
+                Truth Pipeline
                 {inboxCount > 0 && (
                   <span className="bg-indigo-600/30 text-indigo-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {inboxCount}

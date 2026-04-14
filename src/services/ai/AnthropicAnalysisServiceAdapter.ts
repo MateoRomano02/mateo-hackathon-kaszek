@@ -1,14 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { AIAnalysisService } from './AIAnalysisService'
 import type { OnboardingData, UserProfile, SkillStock, OnboardingChatResult } from '@/entities/user/types'
-import type { AnalyzedContent, GeneratedProject } from '@/entities/content/types'
+import type { SourceMetadata, CanonicalInsight, GeneratedProject } from '@/entities/content/types'
 import {
   ANALYZE_PORTFOLIO_TOOL,
   AnalyzePortfolioOutputSchema,
   BUILD_USER_PROFILE_TOOL,
   BuildUserProfileSchema,
-  ANALYZE_CONTENT_TOOL,
-  AnalyzeContentOutputSchema,
+  EVALUATE_SOURCE_TOOL,
+  EvaluateSourceOutputSchema,
+  EXTRACT_CANONICAL_INSIGHTS_TOOL,
+  ExtractInsightsOutputSchema,
   GENERATE_PROJECT_TOOL,
   GenerateProjectOutputSchema,
   ONBOARDING_SYSTEM_PROMPT,
@@ -54,42 +56,25 @@ export const anthropicAnalysisService: AIAnalysisService = {
         max_tokens: 2048,
         tools: [ANALYZE_PORTFOLIO_TOOL],
         tool_choice: { type: 'tool', name: 'analyze_skill_portfolio' },
-        messages: [
-          {
-            role: 'user',
-            content: `Eres un experto en analisis de skills para profesionales de marketing digital en Latinoamerica.
+        messages: [{
+          role: 'user',
+          content: `Analiza el portafolio de skills de este profesional.
 
-Analiza el portafolio de skills de este usuario y clasifica cada skill relevante.
+Perfil: ${profile.role} / ${profile.seniority}
+Stack: ${profile.stack.join(', ')}
+${profile.goals?.length ? `Objetivos: ${profile.goals.join(', ')}` : ''}
+${profile.painPoints?.length ? `Frustraciones: ${profile.painPoints.join(', ')}` : ''}
 
-Perfil del usuario:
-- Rol: ${profile.role}
-- Nivel: ${profile.seniority}
-- Stack actual: ${profile.stack.join(', ')}
-${profile.goals?.length ? `- Objetivos: ${profile.goals.join(', ')}` : ''}
-${profile.painPoints?.length ? `- Frustraciones: ${profile.painPoints.join(', ')}` : ''}
-${profile.summary ? `- Resumen: ${profile.summary}` : ''}
-
-Reglas:
-- Incluye entre 8 y 12 skills relevantes para su rol y nivel.
-- Se especifico con rationale y suggested_action.
-- Incluye skills que NO estan en su stack pero deberia conocer.
-- priority_score de 0 a 10 (10 = maxima urgencia de accion).
-- Todo en espanol.`,
-          },
-        ],
+Incluye 8-12 skills. priority_score 0-10. Todo en espanol.`,
+        }],
       })
 
       const toolBlock = extractToolBlock(response.content, 'analyze_skill_portfolio')
-      if (!toolBlock) throw new Error('Claude no devolvio un tool_use block')
-
+      if (!toolBlock) throw new Error('Claude no devolvio tool_use')
       const parsed = AnalyzePortfolioOutputSchema.parse(toolBlock.input)
       return parsed.skill_stocks.map((s) => ({
-        id: crypto.randomUUID(),
-        skill: s.skill,
-        status: s.status,
-        rationale: s.rationale,
-        priorityScore: s.priority_score,
-        suggestedAction: s.suggested_action,
+        id: crypto.randomUUID(), skill: s.skill, status: s.status,
+        rationale: s.rationale, priorityScore: s.priority_score, suggestedAction: s.suggested_action,
       }))
     } catch (error) {
       const { mensaje } = obtenerMensajeError(error)
@@ -103,17 +88,11 @@ Reglas:
   ): Promise<OnboardingChatResult> {
     try {
       const client = getClient()
-
       const apiMessages: Anthropic.MessageParam[] = []
       if (messages.length > 0 && messages[0].role === 'assistant') {
-        apiMessages.push({
-          role: 'user',
-          content: '[El usuario abre Signal OS por primera vez. Saluda y empieza la entrevista.]',
-        })
+        apiMessages.push({ role: 'user', content: '[El usuario abre Signal OS por primera vez.]' })
       }
-      for (const msg of messages) {
-        apiMessages.push({ role: msg.role, content: msg.content })
-      }
+      for (const msg of messages) apiMessages.push({ role: msg.role, content: msg.content })
 
       const stream = client.messages.stream({
         model: 'claude-sonnet-4-6',
@@ -122,7 +101,6 @@ Reglas:
         tools: [BUILD_USER_PROFILE_TOOL],
         messages: apiMessages,
       })
-
       stream.on('text', (text) => onStream(text))
       const finalMessage = await stream.finalMessage()
       const blocks = finalMessage.content as Anthropic.ContentBlock[]
@@ -130,85 +108,142 @@ Reglas:
       const toolBlock = extractToolBlock(blocks, 'build_user_profile')
       if (toolBlock) {
         const parsed = BuildUserProfileSchema.parse(toolBlock.input)
-        const profile: UserProfile = {
-          id: crypto.randomUUID(),
-          name: parsed.name,
-          role: parsed.role,
-          seniority: parsed.seniority,
-          stack: parsed.stack,
-          goals: parsed.goals,
-          painPoints: parsed.pain_points,
-          summary: parsed.summary,
-          createdAt: new Date().toISOString(),
-        }
-        const textBlock = extractTextBlock(blocks)
         return {
           type: 'profile_complete',
-          profile,
-          content: textBlock?.text || 'Perfil creado! Generando tu diagnostico...',
+          profile: {
+            id: crypto.randomUUID(), name: parsed.name, role: parsed.role,
+            seniority: parsed.seniority, stack: parsed.stack, goals: parsed.goals,
+            painPoints: parsed.pain_points, summary: parsed.summary, createdAt: new Date().toISOString(),
+          },
+          content: extractTextBlock(blocks)?.text || 'Perfil creado!',
         }
       }
-
-      const textBlock = extractTextBlock(blocks)
-      return { type: 'message', content: textBlock?.text || '' }
+      return { type: 'message', content: extractTextBlock(blocks)?.text || '' }
     } catch (error) {
       const { mensaje } = obtenerMensajeError(error)
       throw new Error(mensaje)
     }
   },
 
-  async analyzeContent(content: string, profile: UserProfile): Promise<AnalyzedContent> {
+  // ── TRUTH PIPELINE: Step 1 — Evaluate Source Authority ───────────
+
+  async evaluateSource(content: string, url?: string): Promise<SourceMetadata> {
     try {
       const client = getClient()
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        tools: [ANALYZE_CONTENT_TOOL],
-        tool_choice: { type: 'tool', name: 'analyze_content' },
-        messages: [
-          {
-            role: 'user',
-            content: `Eres un analista de contenido para Signal OS. Analiza el siguiente contenido y clasificalo segun su relevancia para el portafolio de skills del usuario.
+        max_tokens: 1024,
+        tools: [EVALUATE_SOURCE_TOOL],
+        tool_choice: { type: 'tool', name: 'evaluate_source' },
+        messages: [{
+          role: 'user',
+          content: `Eres un analista de credibilidad de fuentes para Signal OS (Truth Layer).
+
+Evalua la autoridad y credibilidad de esta fuente.
+${url ? `URL: ${url}` : '(Texto pegado directamente, sin URL)'}
+
+Criterios:
+- official_docs = documentacion oficial, papers, anuncios de empresa
+- major_publication = TechCrunch, Wired, HBR, MIT Tech Review
+- industry_blog = blogs de profesionales reconocidos
+- social_media = tweets, posts de LinkedIn, hilos
+- primary = la fuente origina la informacion
+- secondary = reporta/comenta sobre informacion primaria
+- opinion = analisis subjetivo
+- aggregator = compila de multiples fuentes
+
+Contenido:
+---
+${content.slice(0, 3000)}
+---
+
+Responde en espanol.`,
+        }],
+      })
+
+      const toolBlock = extractToolBlock(response.content, 'evaluate_source')
+      if (!toolBlock) throw new Error('Claude no evaluo la fuente')
+      const parsed = EvaluateSourceOutputSchema.parse(toolBlock.input)
+
+      return {
+        author: parsed.author,
+        domainAuthority: parsed.domain_authority,
+        freshnessDate: parsed.freshness_date,
+        sourceType: parsed.source_type,
+        credibilityScore: parsed.credibility_score,
+        credibilityReason: parsed.credibility_reason,
+      }
+    } catch (error) {
+      const { mensaje } = obtenerMensajeError(error)
+      throw new Error(mensaje)
+    }
+  },
+
+  // ── TRUTH PIPELINE: Step 2 — Extract Canonical Insights ──────────
+
+  async extractCanonicalInsights(
+    content: string,
+    sourceMetadata: SourceMetadata,
+    profile: UserProfile,
+  ): Promise<{ insights: CanonicalInsight[]; overallRelevance: number }> {
+    try {
+      const client = getClient()
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        tools: [EXTRACT_CANONICAL_INSIGHTS_TOOL],
+        tool_choice: { type: 'tool', name: 'extract_canonical_insights' },
+        messages: [{
+          role: 'user',
+          content: `Eres el Judgment Engine de Signal OS. Tu trabajo es extraer VERDADES CANONICAS de este contenido.
+
+NO resumas. DESTILA. Cada insight debe ser una verdad verificable, no una opinion.
+
+Evaluacion de fuente previa:
+- Autoridad: ${sourceMetadata.domainAuthority}
+- Tipo: ${sourceMetadata.sourceType}
+- Credibilidad: ${sourceMetadata.credibilityScore}/10
+- Razon: ${sourceMetadata.credibilityReason}
 
 Perfil del usuario:
-- Rol: ${profile.role}
-- Nivel: ${profile.seniority}
+- Rol: ${profile.role} / ${profile.seniority}
 - Stack: ${profile.stack.join(', ')}
 ${profile.goals?.length ? `- Objetivos: ${profile.goals.join(', ')}` : ''}
 
-Contenido a analizar:
----
-${content}
----
-
 Reglas:
-- Identifica entre 2 y 5 skills relacionados.
-- Evalua si el contenido sugiere que algun skill esta rising, stable, degrading o gone.
-- Propone 2-3 acciones concretas que el usuario puede tomar.
-- relevance_score de 0 a 10 (10 = extremadamente relevante para su perfil).
-- Todo en espanol.`,
-          },
-        ],
+- Cada insight DEBE tener al menos 1 cita textual exacta del contenido original (evidence).
+- inference_flag = true SOLO si Claude dedujo algo no explicito en el texto.
+- confidence: high = dato verificable con fuente primaria, medium = inferencia razonable, low = opinion o dato sin respaldo.
+- Detecta contradicciones con conocimiento previo comun del area.
+- Extrae 2-5 insights. Calidad > cantidad.
+- related_skills: conecta cada insight con skills del portafolio del usuario.
+- Todo en espanol.
+
+Contenido:
+---
+${content.slice(0, 3500)}
+---`,
+        }],
       })
 
-      const toolBlock = extractToolBlock(response.content, 'analyze_content')
-      if (!toolBlock) throw new Error('Claude no devolvio analisis de contenido')
+      const toolBlock = extractToolBlock(response.content, 'extract_canonical_insights')
+      if (!toolBlock) throw new Error('Claude no extrajo insights')
+      const parsed = ExtractInsightsOutputSchema.parse(toolBlock.input)
 
-      const parsed = AnalyzeContentOutputSchema.parse(toolBlock.input)
-      return {
-        title: parsed.title,
-        summary: parsed.summary,
-        mainTopics: parsed.main_topics,
-        relatedSkills: parsed.related_skills.map((s) => ({
-          skill: s.skill,
-          relevance: s.relevance,
-          statusImpact: s.status_impact,
-          reason: s.reason,
-        })),
-        actionItems: parsed.action_items,
-        relevanceScore: parsed.relevance_score,
-        category: parsed.category,
-      }
+      const insights: CanonicalInsight[] = parsed.canonical_insights.map((ci) => ({
+        id: crypto.randomUUID(),
+        title: ci.title,
+        insight: ci.insight,
+        confidenceLevel: ci.confidence_level,
+        confidenceScore: ci.confidence_score,
+        validationReason: ci.validation_reason,
+        evidence: ci.evidence.map((e) => ({ exactQuote: e.exact_quote, inferenceFlag: e.inference_flag })),
+        relatedSkills: ci.related_skills.map((s) => ({ skill: s.skill, statusImpact: s.status_impact, reason: s.reason })),
+        contradictions: ci.contradictions.map((c) => ({ description: c.description, resolution: c.resolution })),
+        category: ci.category,
+      }))
+
+      return { insights, overallRelevance: parsed.overall_relevance }
     } catch (error) {
       const { mensaje } = obtenerMensajeError(error)
       throw new Error(mensaje)
@@ -223,45 +258,23 @@ Reglas:
         max_tokens: 2048,
         tools: [GENERATE_PROJECT_TOOL],
         tool_choice: { type: 'tool', name: 'generate_project' },
-        messages: [
-          {
-            role: 'user',
-            content: `Eres un disenador instruccional de Signal OS. Genera un mini-proyecto practico y accionable.
-
-Skill target: ${skillName}
-
-Perfil del usuario:
-- Rol: ${profile.role}
-- Nivel: ${profile.seniority}
-- Stack: ${profile.stack.join(', ')}
-${profile.goals?.length ? `- Objetivos: ${profile.goals.join(', ')}` : ''}
-
-Reglas:
-- El proyecto debe ser completable en menos de 3 horas.
-- Pasos concretos, no genericos. El usuario debe saber exactamente que hacer.
-- Incluye recursos reales (URLs a documentacion, herramientas, tutoriales).
-- El resultado esperado debe ser tangible (un dashboard, una campana, un reporte, un flujo automatizado).
-- Adapta la dificultad al nivel del usuario.
-- Todo en espanol.`,
-          },
-        ],
+        messages: [{
+          role: 'user',
+          content: `Genera un mini-proyecto practico para el skill: ${skillName}
+Perfil: ${profile.role} / ${profile.seniority} / Stack: ${profile.stack.join(', ')}
+${profile.goals?.length ? `Objetivos: ${profile.goals.join(', ')}` : ''}
+Completable en <3 horas. Pasos concretos. Recursos reales. Todo en espanol.`,
+        }],
       })
 
       const toolBlock = extractToolBlock(response.content, 'generate_project')
       if (!toolBlock) throw new Error('Claude no genero el proyecto')
-
       const parsed = GenerateProjectOutputSchema.parse(toolBlock.input)
       return {
-        id: crypto.randomUUID(),
-        title: parsed.title,
-        description: parsed.description,
-        difficulty: parsed.difficulty,
-        estimatedTime: parsed.estimated_time,
-        steps: parsed.steps,
-        resources: parsed.resources,
-        expectedOutcome: parsed.expected_outcome,
-        skillTarget: parsed.skill_target,
-        createdAt: new Date().toISOString(),
+        id: crypto.randomUUID(), title: parsed.title, description: parsed.description,
+        difficulty: parsed.difficulty, estimatedTime: parsed.estimated_time, steps: parsed.steps,
+        resources: parsed.resources, expectedOutcome: parsed.expected_outcome,
+        skillTarget: parsed.skill_target, createdAt: new Date().toISOString(),
       }
     } catch (error) {
       const { mensaje } = obtenerMensajeError(error)

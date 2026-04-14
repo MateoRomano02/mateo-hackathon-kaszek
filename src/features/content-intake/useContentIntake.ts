@@ -10,6 +10,7 @@ export function useContentIntake() {
   const [rawText, setRawText] = useState('')
   const [mode, setMode] = useState<'url' | 'text'>('url')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [pipelineStep, setPipelineStep] = useState<string | null>(null)
 
   const { userProfile, addContentItem, updateContentItem, mergeSkillInsight, aiMode } = useAppStore()
 
@@ -22,44 +23,56 @@ export function useContentIntake() {
 
     setIsProcessing(true)
 
-    // Create pending content item
     const contentItem: ContentItem = {
       id: crypto.randomUUID(),
       source: mode,
       originalUrl: mode === 'url' ? url.trim() : undefined,
       rawContent: '',
-      analysis: null,
+      sourceMetadata: null,
+      canonicalInsights: [],
+      overallRelevance: 0,
       status: 'pending',
       createdAt: new Date().toISOString(),
     }
     addContentItem(contentItem)
 
     try {
-      // Step 1: Get raw content
+      // Step 1: Scrape / get raw content
       let content: string
       if (mode === 'url') {
-        updateContentItem(contentItem.id, { status: 'analyzing' })
+        setPipelineStep('Extrayendo contenido...')
+        updateContentItem(contentItem.id, { status: 'scraping' })
         const scraped = await scrapeUrl(url.trim())
         content = scraped.markdown
         updateContentItem(contentItem.id, { rawContent: content })
       } else {
         content = rawText.trim()
-        updateContentItem(contentItem.id, { rawContent: content, status: 'analyzing' })
+        updateContentItem(contentItem.id, { rawContent: content })
       }
 
-      // Step 2: Analyze with Claude
-      const analysis = await service.analyzeContent(content, userProfile)
+      // Step 2: Evaluate source authority
+      setPipelineStep('Evaluando credibilidad de la fuente...')
+      updateContentItem(contentItem.id, { status: 'evaluating_source' })
+      const sourceMetadata = await service.evaluateSource(content, mode === 'url' ? url.trim() : undefined)
+      updateContentItem(contentItem.id, { sourceMetadata })
 
-      updateContentItem(contentItem.id, { analysis, status: 'done' })
+      // Step 3: Extract canonical insights
+      setPipelineStep('Extrayendo verdades canonicas...')
+      updateContentItem(contentItem.id, { status: 'extracting_insights' })
+      const { insights, overallRelevance } = await service.extractCanonicalInsights(content, sourceMetadata, userProfile)
+      updateContentItem(contentItem.id, {
+        canonicalInsights: insights,
+        overallRelevance,
+        status: 'done',
+      })
 
-      // Step 3: Merge skill insights into the portfolio
-      for (const rs of analysis.relatedSkills) {
-        if (rs.relevance === 'high' || rs.relevance === 'medium') {
+      // Step 4: Merge skill insights into portfolio
+      for (const insight of insights) {
+        for (const rs of insight.relatedSkills) {
           mergeSkillInsight(rs.skill, rs.statusImpact, rs.reason)
         }
       }
 
-      // Clear inputs
       setUrl('')
       setRawText('')
     } catch (err) {
@@ -69,17 +82,9 @@ export function useContentIntake() {
       })
     } finally {
       setIsProcessing(false)
+      setPipelineStep(null)
     }
   }
 
-  return {
-    url,
-    setUrl,
-    rawText,
-    setRawText,
-    mode,
-    setMode,
-    isProcessing,
-    processContent,
-  }
+  return { url, setUrl, rawText, setRawText, mode, setMode, isProcessing, pipelineStep, processContent }
 }
